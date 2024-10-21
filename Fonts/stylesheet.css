@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'Kalamaya';
+    src: url('Kalamaya-Regular.woff2') format('woff2'),
+        url('Kalamaya-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
