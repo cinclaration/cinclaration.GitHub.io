@@ -17,13 +17,10 @@ HTML & CSS (Section)
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
             overflow: hidden;
             background: black; /* Fallback for background */
         }
 
-        /* Fixed and Responsive Parallax Background */
         .background-layer {
             position: fixed;
             top: 0;
@@ -32,22 +29,17 @@ HTML & CSS (Section)
             height: 100%;
             background-image: url('https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp');
             background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed; /* Makes the parallax effect smoother */
+            background-repeat: repeat;
             z-index: -1;
         }
 
-        /* Canvas for Game Rendering */
         canvas {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
             z-index: 0;
         }
 
-        /* Scoreboard Styling */
         .scoreboard {
             position: absolute;
             top: 10px;
@@ -60,7 +52,6 @@ HTML & CSS (Section)
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
 
-        /* Menu Button Styling */
         .menu-button {
             position: absolute;
             top: 10px;
@@ -77,9 +68,10 @@ HTML & CSS (Section)
     </style>
 </head>
 <body>
-    <div class="background-layer" id="background"></div>
+    <div class="background-layer"></div>
     <canvas id="gameCanvas"></canvas>
     <div class="scoreboard">Score: <span id="score">0</span></div>
+    <div class="scoreboard" style="top: 50px;">Time Left: <span id="timer">30 seconds</span></div>
     <button class="menu-button" id="menuButton">Menu</button>
 </body>
 </html>
@@ -96,58 +88,62 @@ Begin Java (Section 2)
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Resize canvas dynamically to match the screen
+    // Resize canvas dynamically
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
 
-    // Event listener to resize canvas on window resize
     window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Set initial size
 
-    // Initialize canvas size
-    resizeCanvas();
-
-    // Parallax Background Variables
-    const background = document.getElementById("background");
+    // Parallax Background
     let backgroundOffset = 0;
-
-    // Parallax Scrolling Function
     function updateBackground() {
-        backgroundOffset += 1; // Adjust scrolling speed
-        background.style.transform = `translate(${backgroundOffset % canvas.width}px, ${backgroundOffset % canvas.height}px)`; // Smooth scrolling
+        backgroundOffset += 1; // Adjust speed
+        document.querySelector('.background-layer').style.backgroundPosition = `${backgroundOffset}px ${backgroundOffset}px`;
     }
 
-    // Game State Variables
-    let isPaused = false;
+    // UI Updates
+    function updateUI() {
+        document.getElementById('score').textContent = score;
+        document.getElementById('timer').textContent = `${timeLeft} seconds`;
+    }
+
+    // Timer
+    let timeLeft = 30;
     let score = 0;
 
-    // Draw UI Elements
-    function drawUI() {
-        document.getElementById("score").textContent = score;
+    function startTimer() {
+        setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateUI();
+            } else {
+                alert('Game Over! Try Again.');
+                resetGame();
+            }
+        }, 1000);
     }
 
-    // Menu Button Functionality
-    const menuButton = document.getElementById("menuButton");
+    // Reset Game
+    function resetGame() {
+        timeLeft = 30;
+        score = 0;
+        updateUI();
+    }
 
-    menuButton.addEventListener("click", () => {
-        alert("Menu button clicked! Add your menu logic here.");
-    });
-
-    // Main Game Loop
+    // Start Game Loop
     function gameLoop() {
-        if (!isPaused) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            updateBackground(); // Update parallax background
-            drawUI(); // Draw the UI
-        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+        updateBackground(); // Update background
         requestAnimationFrame(gameLoop); // Loop
     }
 
-    // Start the game loop
+    // Start everything
+    startTimer();
     gameLoop();
 </script>
-
 
 
 
@@ -159,77 +155,53 @@ Java (Section 3)
 */
 
 <script>
-    // Spaceship (Ball) Variables
+    // Spaceship Variables
     const spaceship = {
-        x: canvas.width / 2, // Start at the center of the canvas
+        x: canvas.width / 2,
         y: canvas.height / 2,
-        radius: 20, // Size of the ball (radius)
-        dx: 0, // Velocity in x-direction
-        dy: 0, // Velocity in y-direction
-        friction: 0.9, // Friction to slow movement over time
-        speed: 0.15, // Gyroscopic sensitivity
-        img: new Image(), // Spaceship image
+        radius: 20,
+        dx: 0,
+        dy: 0,
+        friction: 0.9,
+        speed: 0.15,
     };
-    spaceship.img.src = 'https://i.imgur.com/x87KCsX.png'; // Replace with your spaceship image
 
-    // Draw the Spaceship
+    // Draw Spaceship
     function drawSpaceship() {
-        if (spaceship.img.complete) {
-            // Draw the spaceship image
-            ctx.drawImage(
-                spaceship.img,
-                spaceship.x - spaceship.radius,
-                spaceship.y - spaceship.radius,
-                spaceship.radius * 2,
-                spaceship.radius * 2
-            );
-        } else {
-            // Fallback: Draw as a circle
-            ctx.beginPath();
-            ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
-            ctx.fillStyle = "#3498DB"; // Blue fallback color
-            ctx.fill();
-            ctx.closePath();
-        }
+        ctx.beginPath();
+        ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#3498DB'; // Blue
+        ctx.fill();
+        ctx.closePath();
     }
-
-    // Gyroscope Movement
-    window.addEventListener("deviceorientation", (event) => {
-        if (isPaused) return; // Stop processing movement if the game is paused
-        const { beta, gamma } = event; // Phone tilt angles
-        spaceship.dx += gamma * spaceship.speed; // Tilt left/right for horizontal movement
-        spaceship.dy += beta * spaceship.speed; // Tilt forward/backward for vertical movement
-    });
 
     // Update Spaceship Position
     function updateSpaceship() {
-        // Apply friction to slow down movement
         spaceship.dx *= spaceship.friction;
         spaceship.dy *= spaceship.friction;
-
-        // Update position
         spaceship.x += spaceship.dx;
         spaceship.y += spaceship.dy;
 
-        // Keep the spaceship within the screen bounds
-        if (spaceship.x < spaceship.radius) spaceship.x = spaceship.radius;
-        if (spaceship.x > canvas.width - spaceship.radius) spaceship.x = canvas.width - spaceship.radius;
-        if (spaceship.y < spaceship.radius) spaceship.y = spaceship.radius;
-        if (spaceship.y > canvas.height - spaceship.radius) spaceship.y = canvas.height - spaceship.radius;
+        // Keep within bounds
+        spaceship.x = Math.max(spaceship.radius, Math.min(canvas.width - spaceship.radius, spaceship.x));
+        spaceship.y = Math.max(spaceship.radius, Math.min(canvas.height - spaceship.radius, spaceship.y));
 
-        // Draw the updated spaceship position
         drawSpaceship();
     }
 
-    // Integrate Spaceship into Game Loop
+    // Gyroscope Controls
+    window.addEventListener('deviceorientation', (event) => {
+        const { beta, gamma } = event;
+        spaceship.dx += gamma * spaceship.speed;
+        spaceship.dy += beta * spaceship.speed;
+    });
+
+    // Update Game Loop
     function gameLoop() {
-        if (!isPaused) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            updateBackground(); // Update the parallax background
-            updateSpaceship(); // Update spaceship movement
-            drawUI(); // Draw UI elements
-        }
-        requestAnimationFrame(gameLoop); // Keep looping
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+        updateBackground(); // Update background
+        updateSpaceship(); // Update spaceship
+        requestAnimationFrame(gameLoop); // Loop
     }
 
     gameLoop(); // Start the game loop
