@@ -1,3 +1,4 @@
+<!-- COPY THIS SECTION -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,8 +17,8 @@
 
         canvas {
             display: block;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
         }
 
         .scoreboard {
@@ -83,180 +84,155 @@
     </div>
     <canvas id="gameCanvas">
 </canvas>
+<!-- COPY THIS SECTION -->
 <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-        // Adjust canvas size for screen constraints
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
+    // Adjust canvas dimensions with scaling for high-resolution screens
+    function resizeCanvas() {
+        const scale = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * scale;
+        canvas.height = window.innerHeight * scale;
+        ctx.scale(scale, scale);
+    }
+    window.addEventListener("resize", resizeCanvas);
 
-        // Ball properties
-        const ball = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 20,
-            dx: 0,
-            dy: 0,
-            friction: 0.9,
-            speed: 0.2,
-            img: new Image(),
-        };
-        ball.img.src = 'https://via.placeholder.com/50/3498DB?text=Ball';
-
-        // Goals and Obstacles
-        const goals = [];
-        const goalImg = new Image();
-        goalImg.src = 'https://via.placeholder.com/50/8E44AD?text=Goal';
-        const obstacles = [];
-        const powerUps = [];
-        let score = 0;
-        let level = 1;
-        let isPaused = false;
-
-        function createGoals() {
-            goals.splice(0, goals.length, ...Array.from({ length: level + 2 }, () => ({
-                x: Math.random() * (canvas.width - 50),
-                y: Math.random() * (canvas.height - 50),
-                width: 30,
-                height: 30,
-            })));
-        }
-
-        function createObstacles() {
-            obstacles.splice(0, obstacles.length, ...Array.from({ length: level + 1 }, () => ({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 20,
-                color: '#E74C3C',
-            })));
-        }
-
-        function createPowerUps() {
-            powerUps.splice(0, powerUps.length, ...Array.from({ length: level }, () => ({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 15,
-                color: '#F1C40F',
-            })));
-        }
-
-        function nextLevel() {
-            level++;
-            createGoals();
-            createObstacles();
-            createPowerUps();
-        }
-    </script>
-<script>
-        // Gyroscope controls
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', handleOrientation);
-        } else {
-            alert('Gyroscope not supported on this device');
-        }
-
-        function handleOrientation(event) {
-            if (isPaused) return;
-
-            const { beta, gamma } = event; // Tilt data
-            console.log(`Gyroscope Input - Beta: ${beta}, Gamma: ${gamma}`); // Debugging values
-            ball.dx += gamma * ball.speed;
-            ball.dy += beta * ball.speed;
-        }
-
-        function gameLoop() {
-            if (isPaused) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ball.dx *= ball.friction;
-            ball.dy *= ball.friction;
-            ball.x += ball.dx;
-            ball.y += ball.dy;
-
-            // Boundary checks
-            if (ball.x < ball.radius) ball.x = ball.radius;
-            if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
-            if (ball.y < ball.radius) ball.y = ball.radius;
-            if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
-
-            drawBall();
-            drawGoals();
-            drawObstacles();
-            drawPowerUps();
-            checkCollisions();
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        function drawBall() {
-            ctx.drawImage(ball.img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
-        }
-
-        function drawGoals() {
-            goals.forEach(goal => {
-                ctx.drawImage(goalImg, goal.x, goal.y, goal.width, goal.height);
-            });
-        }
-
-        function drawObstacles() {
-            obstacles.forEach(obstacle => {
-                ctx.beginPath();
-                ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
-                ctx.fillStyle = obstacle.color;
-                ctx.fill();
-                ctx.closePath();
-            });
-        }
-
-        function drawPowerUps() {
-            powerUps.forEach(powerUp => {
-                ctx.beginPath();
-                ctx.arc(powerUp.x, powerUp.y, powerUp.radius, 0, Math.PI * 2);
-                ctx.fillStyle = powerUp.color;
-                ctx.fill();
-                ctx.closePath();
-            });
-        }
-
-        function checkCollisions() {
-            goals.forEach((goal, index) => {
-                if (
-                    ball.x + ball.radius > goal.x &&
-                    ball.x - ball.radius < goal.x + goal.width &&
-                    ball.y + ball.radius > goal.y &&
-                    ball.y - ball.radius < goal.y + goal.height
-                ) {
-                    score += 10;
-                    document.getElementById('score').textContent = score;
-                    console.log(`Goal collected! Score: ${score}`);
-                    goals.splice(index, 1);
-
-                    if (goals.length === 0) {
-                        nextLevel();
-                        console.log(`Next Level: ${level}`);
+    // Request gyroscope permissions
+    function requestGyroscopePermission() {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then((response) => {
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    } else {
+                        alert('Gyroscope permission denied.');
                     }
-                }
-            });
-
-            obstacles.forEach(obstacle => {
-                const dist = Math.hypot(ball.x - obstacle.x, ball.y - obstacle.y);
-                if (dist < ball.radius + obstacle.radius) {
-                    score -= 10;
-                    document.getElementById('score').textContent = score;
-                    console.log(`Hit obstacle! Score: ${score}`);
-                }
-            });
+                })
+                .catch(console.error);
+        } else {
+            // For browsers without restricted permissions
+            window.addEventListener('deviceorientation', handleOrientation);
         }
+    }
 
-        createGoals();
-        createObstacles();
-        createPowerUps();
-        gameLoop();
-    </script>
-</body>
-</html>
+    document.addEventListener('DOMContentLoaded', () => {
+        const startButton = document.createElement('button');
+        startButton.innerText = 'Start Game';
+        startButton.style = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            padding: 10px 20px;
+            background: #FF5733;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        `;
+        document.body.appendChild(startButton);
+
+        startButton.addEventListener('click', () => {
+            requestGyroscopePermission();
+            startButton.remove();
+            resizeCanvas();
+            gameLoop();
+        });
+    });
+</script>
+<!-- COPY THIS SECTION -->
+<script>
+    const ball = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 20,
+        dx: 0,
+        dy: 0,
+        friction: 0.9,
+        speed: 0.2,
+        img: new Image(),
+    };
+    ball.img.src = 'https://via.placeholder.com/50/3498DB?text=Ball';
+
+    const goals = [];
+    const goalImg = new Image();
+    goalImg.src = 'https://via.placeholder.com/50/8E44AD?text=Goal';
+
+    const obstacles = [];
+    const powerUps = [];
+    let score = 0;
+    let level = 1;
+    let isPaused = false;
+
+    // Gyroscope controls
+    function handleOrientation(event) {
+        if (isPaused) return;
+
+        const { beta, gamma } = event; // Tilt data
+        ball.dx += gamma * ball.speed;
+        ball.dy += beta * ball.speed;
+    }
+
+    function createObstacles() {
+        obstacles.splice(0, obstacles.length, ...Array.from({ length: level + 1 }, () => ({
+            x: Math.random() * (canvas.width - 30),
+            y: Math.random() * (canvas.height - 30),
+            radius: 20,
+            color: '#E74C3C',
+            dx: Math.random() * 2 - 1, // Slower movement
+            dy: Math.random() * 2 - 1,
+        })));
+    }
+
+    function drawObstacles() {
+        obstacles.forEach(obstacle => {
+            ctx.beginPath();
+            ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+            ctx.fillStyle = obstacle.color;
+            ctx.fill();
+            ctx.closePath();
+
+            obstacle.x += obstacle.dx;
+            obstacle.y += obstacle.dy;
+
+            // Bounce off walls
+            if (obstacle.x < obstacle.radius || obstacle.x > canvas.width - obstacle.radius) {
+                obstacle.dx *= -1;
+            }
+            if (obstacle.y < obstacle.radius || obstacle.y > canvas.height - obstacle.radius) {
+                obstacle.dy *= -1;
+            }
+        });
+    }
+
+    // Main game loop
+    function gameLoop() {
+        if (isPaused) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ball.dx *= ball.friction;
+        ball.dy *= ball.friction;
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        // Keep ball within bounds
+        if (ball.x < ball.radius) ball.x = ball.radius;
+        if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
+        if (ball.y < ball.radius) ball.y = ball.radius;
+        if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
+
+        drawBall();
+        drawGoals();
+        drawObstacles();
+        drawPowerUps();
+        requestAnimationFrame(gameLoop);
+    }
+
+    createGoals();
+    createObstacles();
+    createPowerUps();
+    startTimer();
+    gameLoop();
+</script>
