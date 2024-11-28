@@ -19,85 +19,60 @@ HTML & CSS (Section)
             padding: 0;
             width: 100%;
             height: 100%;
-            background: #000;
             overflow: hidden;
+            background: black; /* Fallback for background */
         }
 
-        /* Parallax Background */
+        /* Fixed and Responsive Parallax Background */
         .background-layer {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            width: 200%;
-            height: 200%;
-            background-image: url('https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp'); /* Scrolling background */
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp');
             background-size: cover;
             background-repeat: no-repeat;
-            z-index: -2;
+            background-attachment: fixed; /* Makes the parallax effect smoother */
+            z-index: -1;
         }
 
+        /* Canvas for Game Rendering */
         canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            z-index: 0;
         }
 
+        /* Scoreboard Styling */
         .scoreboard {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            font-family: Arial, sans-serif;
             color: white;
-            font-size: 30px;
+            font-size: 24px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
 
+        /* Menu Button Styling */
         .menu-button {
             position: absolute;
             top: 10px;
             right: 10px;
             background: orange;
-            color: white;
             border: none;
             border-radius: 5px;
-            padding: 10px 20px;
+            padding: 10px 15px;
             cursor: pointer;
-            z-index: 1;
             font-size: 16px;
-        }
-
-        .menu-box {
-            position: absolute;
-            top: 70px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-            display: none;
-            z-index: 1;
-        }
-
-        .menu-box button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background: #ff5733;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .menu-box button:hover {
-            background: #e03e2d;
+            z-index: 2;
         }
     </style>
 </head>
@@ -106,11 +81,6 @@ HTML & CSS (Section)
     <canvas id="gameCanvas"></canvas>
     <div class="scoreboard">Score: <span id="score">0</span></div>
     <button class="menu-button" id="menuButton">Menu</button>
-    <div class="menu-box" id="menuBox">
-        <button onclick="pauseGame()">Pause</button>
-        <button onclick="restartGame()">Restart</button>
-        <button onclick="showInstructions()">Instructions</button>
-    </div>
 </body>
 </html>
 
@@ -126,72 +96,57 @@ Begin Java (Section 2)
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Resize canvas to match the screen
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Resize canvas dynamically to match the screen
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    // Event listener to resize canvas on window resize
+    window.addEventListener('resize', resizeCanvas);
+
+    // Initialize canvas size
+    resizeCanvas();
 
     // Parallax Background Variables
     const background = document.getElementById("background");
-    let backgroundOffset = 0; // Scroll position
-
-    // Game State Variables
-    let isPaused = false; // Track if the game is paused
-    let score = 0; // Player's score
+    let backgroundOffset = 0;
 
     // Parallax Scrolling Function
     function updateBackground() {
-        backgroundOffset += 1; // Scroll speed
-        background.style.transform = `translate(-${backgroundOffset}px, -${backgroundOffset}px)`; // Move background
-        if (backgroundOffset >= canvas.width) {
-            backgroundOffset = 0; // Loop background seamlessly
-        }
+        backgroundOffset += 1; // Adjust scrolling speed
+        background.style.transform = `translate(${backgroundOffset % canvas.width}px, ${backgroundOffset % canvas.height}px)`; // Smooth scrolling
     }
+
+    // Game State Variables
+    let isPaused = false;
+    let score = 0;
 
     // Draw UI Elements
     function drawUI() {
-        document.getElementById("score").textContent = score; // Update score display
+        document.getElementById("score").textContent = score;
     }
 
     // Menu Button Functionality
     const menuButton = document.getElementById("menuButton");
-    const menuBox = document.getElementById("menuBox");
 
     menuButton.addEventListener("click", () => {
-        menuBox.style.display = menuBox.style.display === "none" ? "block" : "none"; // Toggle menu visibility
+        alert("Menu button clicked! Add your menu logic here.");
     });
 
-    // Game Controls
-    function pauseGame() {
-        isPaused = !isPaused; // Toggle pause state
-        if (!isPaused) {
-            gameLoop(); // Resume game
-        }
-    }
-
-    function restartGame() {
-        score = 0; // Reset score
-        backgroundOffset = 0; // Reset background position
-        isPaused = false; // Resume the game
-        gameLoop(); // Start the game loop again
-    }
-
-    function showInstructions() {
-        alert("Use your phone's gyroscope to move the spaceship. Collect goals, avoid obstacles, and gain power-ups!");
-    }
-
-    // Start Game Loop
+    // Main Game Loop
     function gameLoop() {
         if (!isPaused) {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            updateBackground(); // Update the parallax background
-            drawUI(); // Draw the UI elements
+            updateBackground(); // Update parallax background
+            drawUI(); // Draw the UI
         }
-        requestAnimationFrame(gameLoop); // Keep looping
+        requestAnimationFrame(gameLoop); // Loop
     }
 
-    gameLoop(); // Start the initial game loop
+    // Start the game loop
+    gameLoop();
 </script>
-
 
 
 
