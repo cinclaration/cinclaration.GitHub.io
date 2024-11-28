@@ -96,7 +96,6 @@
         <button onclick="showInstructions()">Instructions</button>
     </div>
     <canvas id="gameCanvas"></canvas>
-
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -129,11 +128,13 @@
     let level = 1;
     let isPaused = false;
 
+    // Utility function to check overlaps
     function doesOverlap(x1, y1, r1, x2, y2, r2) {
         const dist = Math.hypot(x1 - x2, y1 - y2);
         return dist < r1 + r2;
     }
-
+</script>
+<script>
     function createGoals() {
         goals.splice(0, goals.length);
         for (let i = 0; i < level + 2; i++) {
@@ -176,8 +177,57 @@
             powerUps.push({ x, y, radius: 15 });
         }
     }
-</script>
 
+    function drawGoals() {
+        goals.forEach(goal => {
+            if (goalImg.complete) {
+                ctx.drawImage(goalImg, goal.x, goal.y, goal.width, goal.height);
+            } else {
+                ctx.beginPath();
+                ctx.arc(goal.x + 15, goal.y + 15, 15, 0, Math.PI * 2);
+                ctx.fillStyle = "#8E44AD";
+                ctx.fill();
+                ctx.closePath();
+            }
+        });
+    }
+
+    function drawObstacles() {
+        obstacles.forEach(obstacle => {
+            ctx.beginPath();
+            ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+            ctx.fillStyle = obstacle.color;
+            ctx.fill();
+            ctx.closePath();
+        });
+    }
+
+    function drawPowerUps() {
+        powerUps.forEach(powerUp => {
+            if (powerUpImg.complete) {
+                ctx.drawImage(powerUpImg, powerUp.x - 15, powerUp.y - 15, 30, 30);
+            } else {
+                ctx.beginPath();
+                ctx.arc(powerUp.x, powerUp.y, 15, 0, Math.PI * 2);
+                ctx.fillStyle = "#F1C40F";
+                ctx.fill();
+                ctx.closePath();
+            }
+        });
+    }
+
+    function drawBall() {
+        if (ball.img.complete) {
+            ctx.drawImage(ball.img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
+        } else {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#3498DB";
+            ctx.fill();
+            ctx.closePath();
+        }
+    }
+</script>
 <script>
     function checkCollisions() {
         goals.forEach((goal, index) => {
@@ -214,7 +264,60 @@
             }
         });
     }
+
+    function nextLevel() {
+        level++;
+        createGoals();
+        createObstacles();
+        createPowerUps();
+        console.log(`Level ${level} started!`);
+    }
+
+    function gameLoop() {
+        if (isPaused) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ball.dx *= ball.friction;
+        ball.dy *= ball.friction;
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        // Keep ball within bounds
+        if (ball.x < ball.radius) ball.x = ball.radius;
+        if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
+        if (ball.y < ball.radius) ball.y = ball.radius;
+        if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
+
+        drawBall();
+        drawGoals();
+        drawObstacles();
+        drawPowerUps();
+        checkCollisions();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function pauseGame() {
+        isPaused = !isPaused;
+        if (!isPaused) gameLoop();
+    }
+
+    function restartGame() {
+        score = 0;
+        level = 1;
+        document.getElementById('score').textContent = score;
+        createGoals();
+        createObstacles();
+        createPowerUps();
+        gameLoop();
+    }
+
+    function startGame() {
+        createGoals();
+        createObstacles();
+        createPowerUps();
+        gameLoop();
+    }
+
+    startGame();
 </script>
-
-
-
