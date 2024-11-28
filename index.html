@@ -75,7 +75,7 @@
 </head>
 <body>
     <div class="scoreboard">Score: <span id="score">0</span></div>
-    <img src="https://via.placeholder.com/50?text=Logo" class="menu-logo" id="menuLogo" alt="Menu Logo">
+    <img src="https://via.placeholder.com/50/FF5733?text=Menu" class="menu-logo" id="menuLogo" alt="Menu Logo">
     <div class="menu-box" id="menuBox">
         <button onclick="pauseGame()">Pause Game</button>
         <button onclick="restartGame()">Restart Game</button>
@@ -98,21 +98,37 @@
             radius: 20,
             dx: 0,
             dy: 0,
-            friction: 0.95,
-            speed: 0.2,
+            friction: 0.9,
+            speed: 0.05,
             img: new Image(),
         };
-        ball.img.src = 'https://via.placeholder.com/50?text=Ball';
+        ball.img.src = 'https://via.placeholder.com/50/3498DB?text=Ball';
 
-        // Goal properties
-        const goal = {
+        // Goals
+        const goals = Array.from({ length: 3 }, () => ({
             x: Math.random() * (canvas.width - 50),
             y: Math.random() * (canvas.height - 50),
-            width: 50,
-            height: 50,
+            width: 30,
+            height: 30,
             img: new Image(),
-        };
-        goal.img.src = 'https://via.placeholder.com/50?text=Goal';
+        }));
+        goals.forEach(goal => (goal.img.src = 'https://via.placeholder.com/50/8E44AD?text=Goal'));
+
+        // Obstacles
+        const obstacles = Array.from({ length: 3 }, () => ({
+            x: Math.random() * (canvas.width - 30),
+            y: Math.random() * (canvas.height - 30),
+            radius: 20,
+            color: '#E74C3C',
+        }));
+
+        // Power-ups
+        const powerUps = Array.from({ length: 2 }, () => ({
+            x: Math.random() * (canvas.width - 30),
+            y: Math.random() * (canvas.height - 30),
+            radius: 15,
+            color: '#F1C40F',
+        }));
 
         let score = 0;
         let isPaused = false;
@@ -155,7 +171,9 @@
 
             // Draw elements
             drawBall();
-            drawGoal();
+            drawGoals();
+            drawObstacles();
+            drawPowerUps();
 
             // Check collisions
             checkCollisions();
@@ -168,27 +186,69 @@
             ctx.drawImage(ball.img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
         }
 
-        // Draw goal
-        function drawGoal() {
-            ctx.drawImage(goal.img, goal.x, goal.y, goal.width, goal.height);
+        // Draw goals
+        function drawGoals() {
+            goals.forEach(goal => {
+                ctx.drawImage(goal.img, goal.x, goal.y, goal.width, goal.height);
+            });
+        }
+
+        // Draw obstacles
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                ctx.beginPath();
+                ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+                ctx.fillStyle = obstacle.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        // Draw power-ups
+        function drawPowerUps() {
+            powerUps.forEach(powerUp => {
+                ctx.beginPath();
+                ctx.arc(powerUp.x, powerUp.y, powerUp.radius, 0, Math.PI * 2);
+                ctx.fillStyle = powerUp.color;
+                ctx.fill();
+                ctx.closePath();
+            });
         }
 
         // Check collisions
         function checkCollisions() {
-            // Ball and goal collision
-            if (
-                ball.x + ball.radius > goal.x &&
-                ball.x - ball.radius < goal.x + goal.width &&
-                ball.y + ball.radius > goal.y &&
-                ball.y - ball.radius < goal.y + goal.height
-            ) {
-                score++;
-                document.getElementById('score').textContent = score;
+            // Ball and goals
+            goals.forEach((goal, index) => {
+                if (
+                    ball.x + ball.radius > goal.x &&
+                    ball.x - ball.radius < goal.x + goal.width &&
+                    ball.y + ball.radius > goal.y &&
+                    ball.y - ball.radius < goal.y + goal.height
+                ) {
+                    score += 10;
+                    document.getElementById('score').textContent = score;
+                    goals.splice(index, 1); // Remove the collected goal
+                }
+            });
 
-                // Move goal to a new random position
-                goal.x = Math.random() * (canvas.width - 50);
-                goal.y = Math.random() * (canvas.height - 50);
-            }
+            // Ball and obstacles
+            obstacles.forEach(obstacle => {
+                const dist = Math.hypot(ball.x - obstacle.x, ball.y - obstacle.y);
+                if (dist < ball.radius + obstacle.radius) {
+                    score -= 5;
+                    document.getElementById('score').textContent = score;
+                }
+            });
+
+            // Ball and power-ups
+            powerUps.forEach((powerUp, index) => {
+                const dist = Math.hypot(ball.x - powerUp.x, ball.y - powerUp.y);
+                if (dist < ball.radius + powerUp.radius) {
+                    score += 20;
+                    document.getElementById('score').textContent = score;
+                    powerUps.splice(index, 1); // Remove the collected power-up
+                }
+            });
         }
 
         // Menu logic
@@ -210,12 +270,37 @@
             ball.dy = 0;
             score = 0;
             document.getElementById('score').textContent = score;
+
+            // Reset goals, obstacles, and power-ups
+            goals.splice(0, goals.length, ...Array.from({ length: 3 }, () => ({
+                x: Math.random() * (canvas.width - 50),
+                y: Math.random() * (canvas.height - 50),
+                width: 30,
+                height: 30,
+                img: new Image(),
+            })));
+            goals.forEach(goal => (goal.img.src = 'https://via.placeholder.com/50/8E44AD?text=Goal'));
+
+            obstacles.splice(0, obstacles.length, ...Array.from({ length: 3 }, () => ({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                radius: 20,
+                color: '#E74C3C',
+            })));
+
+            powerUps.splice(0, powerUps.length, ...Array.from({ length: 2 }, () => ({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                radius: 15,
+                color: '#F1C40F',
+            })));
+
             isPaused = false;
             gameLoop();
         }
 
         function showInstructions() {
-            alert('Tilt your phone to move the ball. Reach the goal to increase your score!');
+            alert('Tilt your phone to move the ball. Reach the goals to increase your score! Avoid obstacles and collect power-ups for bonuses.');
         }
 
         // Start the game
