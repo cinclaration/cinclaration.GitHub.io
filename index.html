@@ -39,6 +39,8 @@
             right: 10px;
             cursor: pointer;
             z-index: 200;
+            width: 50px;
+            height: 50px;
         }
 
         .menu-box {
@@ -73,7 +75,7 @@
 </head>
 <body>
     <div class="scoreboard">Score: <span id="score">0</span></div>
-    <img src="your-logo-url.png" class="menu-logo" id="menuLogo" alt="Menu Logo" width="50" height="50">
+    <img src="https://images.app.goo.gl/EgWqm23QnzVTpwgh7" class="menu-logo" id="menuLogo" alt="Menu Logo">
     <div class="menu-box" id="menuBox">
         <button onclick="pauseGame()">Pause Game</button>
         <button onclick="restartGame()">Restart Game</button>
@@ -85,7 +87,7 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Canvas dimensions
+        // Adjust canvas dimensions
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -96,11 +98,11 @@
             radius: 20,
             dx: 0,
             dy: 0,
-            friction: 0.98,
+            friction: 0.95,
             speed: 0.2,
             img: new Image(),
         };
-        ball.img.src = 'https://www.cleanpng.com/png-colorful-spaceship-illustration-8185932/'; // Replace with your ball skin URL
+        ball.img.src = 'https://www.cleanpng.com/png-colorful-spaceship-illustration-8185932/';
 
         // Goal properties
         const goal = {
@@ -110,25 +112,7 @@
             height: 50,
             img: new Image(),
         };
-        goal.img.src = 'your-goal-image-url.png'; // Replace with your goal image URL
-
-        // Power-ups and obstacles
-        const powerUps = [];
-        const obstacles = [];
-        for (let i = 0; i < 3; i++) {
-            powerUps.push({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 15,
-                color: 'gold',
-            });
-            obstacles.push({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 20,
-                color: 'red',
-            });
-        }
+        goal.img.src = 'https://www.creativefabrica.com/prod/colorful-and-eye-catching-purple-planet-wallpaper-png-F2q979BRZ/';
 
         let score = 0;
         let isPaused = false;
@@ -152,6 +136,7 @@
         function gameLoop() {
             if (isPaused) return;
 
+            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Apply friction
@@ -162,11 +147,15 @@
             ball.x += ball.dx;
             ball.y += ball.dy;
 
+            // Keep the ball within canvas bounds
+            if (ball.x < ball.radius) ball.x = ball.radius;
+            if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
+            if (ball.y < ball.radius) ball.y = ball.radius;
+            if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
+
             // Draw elements
             drawBall();
             drawGoal();
-            drawPowerUps();
-            drawObstacles();
 
             // Check collisions
             checkCollisions();
@@ -184,31 +173,9 @@
             ctx.drawImage(goal.img, goal.x, goal.y, goal.width, goal.height);
         }
 
-        // Draw power-ups
-        function drawPowerUps() {
-            powerUps.forEach((p) => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                ctx.closePath();
-            });
-        }
-
-        // Draw obstacles
-        function drawObstacles() {
-            obstacles.forEach((o) => {
-                ctx.beginPath();
-                ctx.arc(o.x, o.y, o.radius, 0, Math.PI * 2);
-                ctx.fillStyle = o.color;
-                ctx.fill();
-                ctx.closePath();
-            });
-        }
-
         // Check collisions
         function checkCollisions() {
-            // Ball and goal
+            // Ball and goal collision
             if (
                 ball.x + ball.radius > goal.x &&
                 ball.x - ball.radius < goal.x + goal.width &&
@@ -217,28 +184,11 @@
             ) {
                 score++;
                 document.getElementById('score').textContent = score;
+
+                // Move goal to a new random position
                 goal.x = Math.random() * (canvas.width - 50);
                 goal.y = Math.random() * (canvas.height - 50);
             }
-
-            // Ball and power-ups
-            powerUps.forEach((p, index) => {
-                const dist = Math.hypot(ball.x - p.x, ball.y - p.y);
-                if (dist < ball.radius + p.radius) {
-                    score += 5;
-                    document.getElementById('score').textContent = score;
-                    powerUps.splice(index, 1); // Remove the collected power-up
-                }
-            });
-
-            // Ball and obstacles
-            obstacles.forEach((o) => {
-                const dist = Math.hypot(ball.x - o.x, ball.y - o.y);
-                if (dist < ball.radius + o.radius) {
-                    score -= 2;
-                    document.getElementById('score').textContent = score;
-                }
-            });
         }
 
         // Menu logic
@@ -265,7 +215,7 @@
         }
 
         function showInstructions() {
-            alert('Tilt your phone to move the ball. Reach the goal and avoid obstacles!');
+            alert('Tilt your phone to move the ball. Reach the goal to increase your score!');
         }
 
         // Start the game
