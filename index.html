@@ -22,6 +22,25 @@
       z-index: 10;
     }
 
+    #start-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 15px 30px;
+      font-size: 24px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #start-button:hover {
+      background-color: #0056b3;
+    }
+
     #scoreboard {
       position: absolute;
       top: 10px;
@@ -39,20 +58,22 @@
     <p>Score: <span id="score">0</span></p>
     <p>Time Left: <span id="timer">30</span></p>
   </div>
+  <button id="start-button">Start Game</button>
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menuButton = document.getElementById('menu-button');
+    const startButton = document.getElementById('start-button');
     const scoreElement = document.getElementById('score');
     const timerElement = document.getElementById('timer');
 
     // Game Variables
-    let spaceship = { x: 100, y: 100, size: 50, speedX: 0, speedY: 0 };
+    let spaceship = { x: 100, y: 100, size: 50 };
+    let backgroundPosition = { x: 0, y: 0 };
     let score = 0;
     let timer = 30;
     let goals = [];
-    let isPaused = false;
-    let gyroscopeEnabled = false;
+    let isPaused = true;
 
     // Asset URLs
     const spaceshipImg = new Image();
@@ -64,8 +85,6 @@
     const backgroundImg = new Image();
     backgroundImg.src = 'https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp';
 
-    let backgroundOffset = 0;
-
     // Canvas Initialization
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -74,27 +93,6 @@
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
-    // Gyroscope Controls
-    function enableGyroscope() {
-      window.addEventListener('deviceorientation', (event) => {
-        if (!gyroscopeEnabled) return;
-        const { beta, gamma } = event;
-        spaceship.y += beta / 20;
-        spaceship.x += gamma / 20;
-        keepWithinBounds(spaceship);
-      });
-    }
-
-    // Collision Detection
-    function isColliding(a, b) {
-      return (
-        a.x < b.x + b.size &&
-        a.x + a.size > b.x &&
-        a.y < b.y + b.size &&
-        a.y + a.size > b.y
-      );
-    }
 
     // Prevent Overlaps
     function spawnGoal() {
@@ -109,15 +107,19 @@
       goals.push(goal);
     }
 
-    // Keep Spaceship Within Canvas Bounds
-    function keepWithinBounds(obj) {
-      obj.x = Math.max(0, Math.min(canvas.width - obj.size, obj.x));
-      obj.y = Math.max(0, Math.min(canvas.height - obj.size, obj.y));
+    // Collision Detection
+    function isColliding(a, b) {
+      return (
+        a.x < b.x + b.size &&
+        a.x + a.size > b.x &&
+        a.y < b.y + b.size &&
+        a.y + a.size > b.y
+      );
     }
 
     // Render Elements
     function drawSpaceship() {
-      ctx.drawImage(spaceshipImg, spaceship.x, spaceship.y, spaceship.size, spaceship.size);
+      ctx.drawImage(spaceshipImg, spaceship.x - spaceship.size / 2, spaceship.y - spaceship.size / 2, spaceship.size, spaceship.size);
     }
 
     function drawGoals() {
@@ -127,13 +129,36 @@
     }
 
     function drawBackground() {
-      ctx.drawImage(backgroundImg, 0, backgroundOffset, canvas.width, canvas.height);
-      ctx.drawImage(backgroundImg, 0, backgroundOffset - canvas.height, canvas.width, canvas.height);
-      backgroundOffset += 2;
-      if (backgroundOffset >= canvas.height) {
-        backgroundOffset = 0;
-      }
+      const scale = 1.2; // Slight zoom
+      const bgWidth = canvas.width * scale;
+      const bgHeight = canvas.height * scale;
+      const offsetX = backgroundPosition.x - (bgWidth - canvas.width) / 2;
+      const offsetY = backgroundPosition.y - (bgHeight - canvas.height) / 2;
+
+      ctx.drawImage(backgroundImg, offsetX, offsetY, bgWidth, bgHeight);
     }
+
+    // Update Background Position
+    function updateBackground() {
+      backgroundPosition.x -= (spaceship.x - canvas.width / 2) * 0.02;
+      backgroundPosition.y -= (spaceship.y - canvas.height / 2) * 0.02;
+    }
+
+    // Keep Spaceship Within Canvas Bounds
+    function keepWithinBounds(obj) {
+      obj.x = Math.max(0, Math.min(canvas.width, obj.x));
+      obj.y = Math.max(0, Math.min(canvas.height, obj.y));
+    }
+
+    // Handle Touch Movement
+    canvas.addEventListener('touchmove', (event) => {
+      if (!isPaused) {
+        const touch = event.touches[0];
+        spaceship.x = touch.clientX;
+        spaceship.y = touch.clientY;
+        keepWithinBounds(spaceship);
+      }
+    });
 
     // Update Game State
     function updateGame() {
@@ -155,6 +180,9 @@
           spawnGoal();
         }
       });
+
+      // Update Background
+      updateBackground();
     }
 
     // Main Game Loop
@@ -179,9 +207,14 @@
       }
     });
 
+    // Start Button Functionality
+    startButton.addEventListener('click', () => {
+      isPaused = false;
+      startButton.style.display = 'none';
+    });
+
     // Start Game
     for (let i = 0; i < 5; i++) spawnGoal();
-    enableGyroscope();
     gameLoop();
   </script>
 </body>
