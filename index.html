@@ -17,7 +17,9 @@
       top: 10px;
       left: 10px;
       width: 50px;
+      height: 50px;
       cursor: pointer;
+      z-index: 10;
     }
 
     #scoreboard {
@@ -26,6 +28,7 @@
       right: 10px;
       color: white;
       font-size: 20px;
+      z-index: 10;
     }
   </style>
 </head>
@@ -44,7 +47,7 @@
     const timerElement = document.getElementById('timer');
 
     // Game Variables
-    let spaceship = { x: 100, y: 100, size: 50 };
+    let spaceship = { x: 100, y: 100, size: 50, speedX: 0, speedY: 0 };
     let score = 0;
     let timer = 30;
     let goals = [];
@@ -60,6 +63,8 @@
 
     const backgroundImg = new Image();
     backgroundImg.src = 'https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp';
+
+    let backgroundOffset = 0;
 
     // Canvas Initialization
     function resizeCanvas() {
@@ -122,7 +127,12 @@
     }
 
     function drawBackground() {
-      ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(backgroundImg, 0, backgroundOffset, canvas.width, canvas.height);
+      ctx.drawImage(backgroundImg, 0, backgroundOffset - canvas.height, canvas.width, canvas.height);
+      backgroundOffset += 2;
+      if (backgroundOffset >= canvas.height) {
+        backgroundOffset = 0;
+      }
     }
 
     // Update Game State
