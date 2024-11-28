@@ -68,19 +68,28 @@
     const timerElement = document.getElementById('timer');
 
     // Game Variables
-    let spaceship = { x: 100, y: 100, size: 50 };
+    let spaceship = { x: 100, y: 100, size: 50, angle: 0 };
     let backgroundPosition = { x: 0, y: 0 };
+    const playSpace = { width: 2000, height: 2000 }; // Fixed play space size
     let score = 0;
     let timer = 30;
     let goals = [];
+    let obstacles = [];
+    let bonus = [];
     let isPaused = true;
 
     // Asset URLs
     const spaceshipImg = new Image();
     spaceshipImg.src = 'https://i.imgur.com/x87KCsX.png';
 
-    const goalImg = new Image();
-    goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg';
+    const goalImg = new Image(); // Planet for objectives
+    goalImg.src = 'https://i.imgur.com/1gjnrOj.png';
+
+    const obstacleImg = new Image(); // Asteroid for obstacles
+    obstacleImg.src = 'https://i.imgur.com/Gj51iJt.png';
+
+    const bonusImg = new Image(); // Star for bonus
+    bonusImg.src = 'https://i.imgur.com/fMzHhwv.png';
 
     const backgroundImg = new Image();
     backgroundImg.src = 'https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp';
@@ -95,19 +104,20 @@
     resizeCanvas();
 
     // Prevent Overlaps
-    function spawnGoal() {
-      let goal;
-      do {
-        goal = {
-          x: Math.random() * (canvas.width - 50),
-          y: Math.random() * (canvas.height - 50),
-          size: 50,
-        };
-      } while (goals.some((g) => isColliding(g, goal)));
-      goals.push(goal);
+    function spawnEntity(entityArray, size, count) {
+      for (let i = 0; i < count; i++) {
+        let entity;
+        do {
+          entity = {
+            x: Math.random() * playSpace.width,
+            y: Math.random() * playSpace.height,
+            size: size,
+          };
+        } while (entityArray.some((e) => isColliding(e, entity)));
+        entityArray.push(entity);
+      }
     }
 
-    // Collision Detection
     function isColliding(a, b) {
       return (
         a.x < b.x + b.size &&
@@ -117,52 +127,50 @@
       );
     }
 
-    // Render Elements
-    function drawSpaceship() {
-      ctx.drawImage(spaceshipImg, spaceship.x - spaceship.size / 2, spaceship.y - spaceship.size / 2, spaceship.size, spaceship.size);
+    function drawBackground() {
+      ctx.drawImage(
+        backgroundImg,
+        backgroundPosition.x,
+        backgroundPosition.y,
+        playSpace.width,
+        playSpace.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
     }
 
-    function drawGoals() {
-      goals.forEach((goal) => {
-        ctx.drawImage(goalImg, goal.x, goal.y, goal.size, goal.size);
+    function drawEntities(entityArray, image) {
+      entityArray.forEach((entity) => {
+        ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
       });
     }
 
-    function drawBackground() {
-      const scale = 1.2; // Slight zoom
-      const bgWidth = canvas.width * scale;
-      const bgHeight = canvas.height * scale;
-      const offsetX = backgroundPosition.x - (bgWidth - canvas.width) / 2;
-      const offsetY = backgroundPosition.y - (bgHeight - canvas.height) / 2;
-
-      ctx.drawImage(backgroundImg, offsetX, offsetY, bgWidth, bgHeight);
+    function drawSpaceship() {
+      ctx.save();
+      ctx.translate(spaceship.x, spaceship.y);
+      ctx.rotate(spaceship.angle);
+      ctx.drawImage(spaceshipImg, -spaceship.size / 2, -spaceship.size / 2, spaceship.size, spaceship.size);
+      ctx.restore();
     }
 
-    // Update Background Position
     function updateBackground() {
-      backgroundPosition.x -= (spaceship.x - canvas.width / 2) * 0.02;
-      backgroundPosition.y -= (spaceship.y - canvas.height / 2) * 0.02;
+      backgroundPosition.x = -spaceship.x + canvas.width / 2;
+      backgroundPosition.y = -spaceship.y + canvas.height / 2;
+
+      // Clamp to play space boundaries
+      backgroundPosition.x = Math.max(
+        Math.min(backgroundPosition.x, 0),
+        canvas.width - playSpace.width
+      );
+      backgroundPosition.y = Math.max(
+        Math.min(backgroundPosition.y, 0),
+        canvas.height - playSpace.height
+      );
     }
 
-    // Keep Spaceship Within Canvas Bounds
-    function keepWithinBounds(obj) {
-      obj.x = Math.max(0, Math.min(canvas.width, obj.x));
-      obj.y = Math.max(0, Math.min(canvas.height, obj.y));
-    }
-
-    // Handle Touch Movement
-    canvas.addEventListener('touchmove', (event) => {
-      if (!isPaused) {
-        const touch = event.touches[0];
-        spaceship.x = touch.clientX;
-        spaceship.y = touch.clientY;
-        keepWithinBounds(spaceship);
-      }
-    });
-
-    // Update Game State
     function updateGame() {
-      // Timer Countdown
       if (timer > 0 && !isPaused) {
         timer -= 1 / 60;
         timerElement.textContent = Math.floor(timer);
@@ -171,50 +179,55 @@
         alert('Game Over! Final Score: ' + score);
       }
 
-      // Check for Collisions
       goals.forEach((goal, index) => {
         if (isColliding(spaceship, goal)) {
           score += 10;
           scoreElement.textContent = score;
           goals.splice(index, 1);
-          spawnGoal();
         }
       });
 
-      // Update Background
+      obstacles.forEach((obstacle, index) => {
+        if (isColliding(spaceship, obstacle)) {
+          score -= 5;
+          scoreElement.textContent = score;
+          obstacles.splice(index, 1);
+        }
+      });
+
+      bonus.forEach((b, index) => {
+        if (isColliding(spaceship, b)) {
+          score += 50;
+          scoreElement.textContent = score;
+          bonus.splice(index, 1);
+        }
+      });
+
       updateBackground();
     }
 
-    // Main Game Loop
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       if (!isPaused) {
         drawBackground();
         drawSpaceship();
-        drawGoals();
+        drawEntities(goals, goalImg);
+        drawEntities(obstacles, obstacleImg);
+        drawEntities(bonus, bonusImg);
         updateGame();
       }
-
       requestAnimationFrame(gameLoop);
     }
 
-    // Menu Button Functionality
-    menuButton.addEventListener('click', () => {
-      isPaused = !isPaused;
-      if (isPaused) {
-        alert('Game Paused! Click OK to resume.');
-      }
-    });
-
-    // Start Button Functionality
+    // Start Button
     startButton.addEventListener('click', () => {
       isPaused = false;
       startButton.style.display = 'none';
     });
 
-    // Start Game
-    for (let i = 0; i < 5; i++) spawnGoal();
+    spawnEntity(goals, 50, 5);
+    spawnEntity(obstacles, 50, 5);
+    spawnEntity(bonus, 70, 1);
     gameLoop();
   </script>
 </body>
