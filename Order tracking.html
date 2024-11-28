@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Tracking</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #1b263b, #415a77);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .tracking-form {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      text-align: center;
+    }
+
+    .tracking-form h2 {
+      margin-bottom: 20px;
+    }
+
+    .tracking-form input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .tracking-form button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    .tracking-form button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="tracking-form">
+    <h2>Track Your Order</h2>
+    <input type="text" id="order-id" placeholder="Enter your Order ID">
+    <button onclick="trackOrder()">Track Order</button>
+  </div>
+  <script>
+    function trackOrder() {
+      const orderId = document.getElementById('order-id').value;
+      if (orderId === '12345') {
+        alert('Your order is on its way!');
+      } else {
+        alert('Order not found. Please check your ID.');
+      }
+    }
+  </script>
+</body>
+</html>
