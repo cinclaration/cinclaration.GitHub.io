@@ -64,6 +64,7 @@
   <canvas id="gameCanvas"></canvas>
   <img id="menu-button" src="https://i.imgur.com/fINCGcJ.png" alt="Menu">
   <div id="dropdown-menu">
+    <button id="toggle-controls">Switch to Gyroscope</button>
     <button id="restart-game">Restart Game</button>
   </div>
   <div id="scoreboard">
@@ -75,18 +76,20 @@
     const ctx = canvas.getContext('2d');
     const menuButton = document.getElementById('menu-button');
     const dropdownMenu = document.getElementById('dropdown-menu');
+    const toggleControlsButton = document.getElementById('toggle-controls');
     const restartButton = document.getElementById('restart-game');
     const scoreElement = document.getElementById('score');
     const timerElement = document.getElementById('timer');
 
     // Game Variables
-    let spaceship = { x: 400, y: 300, size: 50, angle: 0 };
+    let spaceship = { x: 400, y: 300, size: 50, angle: 0, speedX: 0, speedY: 0 };
     const playSpace = { width: 1600, height: 1200 };
     let score = 0;
     let timer = 30;
     let goals = [];
     let obstacles = [];
     let isPaused = false;
+    let gyroscopeEnabled = false;
 
     // Assets
     const spaceshipImg = new Image();
@@ -110,9 +113,17 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Toggle Dropdown Menu
+    // Dropdown Menu
     menuButton.addEventListener('click', () => {
       dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Toggle Controls
+    toggleControlsButton.addEventListener('click', () => {
+      gyroscopeEnabled = !gyroscopeEnabled;
+      toggleControlsButton.textContent = gyroscopeEnabled
+        ? 'Switch to Touch'
+        : 'Switch to Gyroscope';
     });
 
     // Restart Game
@@ -131,10 +142,14 @@
       spawnEntities(obstacles, 5, 50);
       scoreElement.textContent = score;
       timerElement.textContent = timer;
+      spaceship.x = canvas.width / 2;
+      spaceship.y = canvas.height / 2;
+      spaceship.speedX = 0;
+      spaceship.speedY = 0;
       isPaused = false;
     }
 
-    // Prevent Overlaps and Spawn Entities
+    // Spawn Entities
     function spawnEntities(entityArray, count, size) {
       for (let i = 0; i < count; i++) {
         let entity;
@@ -173,10 +188,14 @@
 
     // Draw Spaceship
     function drawSpaceship() {
-      ctx.drawImage(spaceshipImg, spaceship.x, spaceship.y, spaceship.size, spaceship.size);
+      ctx.save();
+      ctx.translate(spaceship.x, spaceship.y);
+      ctx.rotate(spaceship.angle);
+      ctx.drawImage(spaceshipImg, -spaceship.size / 2, -spaceship.size / 2, spaceship.size, spaceship.size);
+      ctx.restore();
     }
 
-    // Update Game
+    // Update Game State
     function updateGame() {
       if (timer > 0 && !isPaused) {
         timer -= 1 / 60;
@@ -202,6 +221,13 @@
           obstacles.splice(index, 1);
         }
       });
+
+      // Update Spaceship Position
+      if (gyroscopeEnabled) {
+        // Gyroscope Movement (dummy logic)
+        spaceship.x += spaceship.speedX;
+        spaceship.y += spaceship.speedY;
+      }
     }
 
     // Game Loop
