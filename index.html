@@ -1,217 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmic Drift</title>
-    <style>
-        /*-------------- CSS/Section 1: Global Styling ---------------*/
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: black; /* Fallback for background */
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Score and Timer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-        .background-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp');
-            background-size: cover;
-            background-repeat: no-repeat;
-            z-index: -1;
-        }
+    .container {
+      text-align: center;
+    }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 0;
-        }
+    h1, h2 {
+      margin: 10px 0;
+    }
 
-        .scoreboard {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            z-index: 1;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-        }
+    #action-btn {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.3s;
+    }
 
-        .menu-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            z-index: 2;
-        }
-        .menu-button img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-    </style>
+    #action-btn:hover {
+      background-color: #0056b3;
+    }
+
+    #action-btn:active {
+      background-color: #003f7f;
+    }
+  </style>
 </head>
 <body>
-    <div class="background-layer"></div>
-    <canvas id="gameCanvas"></canvas>
-    <div class="scoreboard">Score: <span id="score">0</span></div>
-    <div class="scoreboard" style="top: 50px;">Time Left: <span id="timer">30 seconds</span></div>
-    <button class="menu-button" id="menuButton">
-        <img src="https://i.imgur.com/fINCGcJ.png" alt="Menu Logo">
-    </button>
+  <div class="container">
+    <h1>Score: <span id="score">0</span></h1>
+    <h2>Time Left: <span id="time-left">30</span> seconds</h2>
+    <button id="action-btn">Click Me!</button>
+  </div>
+  <script>
+    // Initialize variables
+    let score = 0;
+    let timeLeft = 30;
+    const scoreElement = document.getElementById('score');
+    const timeLeftElement = document.getElementById('time-left');
+    const actionButton = document.getElementById('action-btn');
+
+    // Function to update score
+    function updateScore() {
+      score += 1;
+      scoreElement.textContent = score;
+    }
+
+    // Function to handle the timer
+    function startTimer() {
+      const timerInterval = setInterval(() => {
+        timeLeft -= 1;
+        timeLeftElement.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          actionButton.disabled = true;
+          actionButton.textContent = "Time's Up!";
+        }
+      }, 1000);
+    }
+
+    // Event listener for button clicks
+    actionButton.addEventListener('click', updateScore);
+
+    // Start the timer on page load
+    startTimer();
+  </script>
 </body>
-
-/*-------------- JavaScript/Section 2: Canvas Initialization ---------------*/
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    document.querySelector('.background-layer').style.width = `${canvas.width}px`;
-    document.querySelector('.background-layer').style.height = `${canvas.height}px`;
-}
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas(); // Initial call
-
-/*-------------- JavaScript/Section 3: Background Setup ---------------*/
-const background = document.querySelector('.background-layer');
-let backgroundOffsetX = 0;
-let backgroundOffsetY = 0;
-
-function updateBackground() {
-    backgroundOffsetX += 1;
-    backgroundOffsetY += 1;
-    background.style.backgroundPosition = `${-backgroundOffsetX}px ${-backgroundOffsetY}px`;
-}
-
-/*-------------- JavaScript/Section 4: UI Updates (Score and Timer) ---------------*/
-let timeLeft = 30;
-let score = 0;
-
-function updateUI() {
-    document.getElementById('score').textContent = score;
-    document.getElementById('timer').textContent = `${timeLeft} seconds`;
-}
-
-function startTimer() {
-    setInterval(() => {
-        if (timeLeft > 0) {
-            timeLeft--;
-            updateUI();
-        } else {
-            alert('Game Over! Try Again.');
-            resetGame();
-        }
-    }, 1000);
-}
-
-function resetGame() {
-    timeLeft = 30;
-    score = 0;
-    updateUI();
-}
-
-
-/*-------------- JavaScript/Section 5: Spaceship and Controls ---------------*/
-const spaceship = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    radius: 20,
-    dx: 0,
-    dy: 0,
-    friction: 0.9,
-    speed: 0.15,
-    img: new Image(),
-};
-spaceship.img.src = 'https://i.imgur.com/x87KCsX.png';
-
-function drawSpaceship() {
-    if (spaceship.img.complete) {
-        ctx.drawImage(
-            spaceship.img,
-            spaceship.x - spaceship.radius,
-            spaceship.y - spaceship.radius,
-            spaceship.radius * 2,
-            spaceship.radius * 2
-        );
-    } else {
-        ctx.beginPath();
-        ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#3498DB';
-        ctx.fill();
-        ctx.closePath();
-    }
-}
-
-function updateSpaceship() {
-    spaceship.dx *= spaceship.friction;
-    spaceship.dy *= spaceship.friction;
-    spaceship.x += spaceship.dx;
-    spaceship.y += spaceship.dy;
-
-    spaceship.x = Math.max(spaceship.radius, Math.min(canvas.width - spaceship.radius, spaceship.x));
-    spaceship.y = Math.max(spaceship.radius, Math.min(canvas.height - spaceship.radius, spaceship.y));
-
-    drawSpaceship();
-}
-
-window.addEventListener('deviceorientation', (event) => {
-    const { beta, gamma } = event;
-    spaceship.dx += gamma * spaceship.speed;
-    spaceship.dy += beta * spaceship.speed;
-});
-
-/*-------------- JavaScript/Section 6: Goals and Collision Detection ---------------*/
-const goals = [];
-const goalImg = new Image();
-goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg';
-
-function createGoals() {
-    for (let i = 0; i < 5; i++) {
-        const x = Math.random() * (canvas.width - 30) + 15;
-        const y = Math.random() * (canvas.height - 30) + 15;
-        goals.push({ x, y });
-    }
-}
-
-function drawGoals() {
-    goals.forEach(goal => {
-        ctx.drawImage(goalImg, goal.x - 15, goal.y - 15, 30, 30);
-    });
-}
-
-function checkCollisions() {
-    goals.forEach((goal, index) => {
-        if (Math.hypot(spaceship.x - goal.x, spaceship.y - goal.y) < spaceship.radius + 15) {
-            score += 10;
-            goals.splice(index, 1);
-        }
-    });
-}
-
-/*-------------- JavaScript/Section 7: Game Loop ---------------*/
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    updateBackground();
-    updateSpaceship();
-    drawGoals();
-    checkCollisions();
-    updateUI();
-    requestAnimationFrame(gameLoop);
-}
-
-createGoals();
-startTimer();
-gameLoop();
-
+</html>
