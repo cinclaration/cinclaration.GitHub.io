@@ -3,154 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Resume</title>
-    
-    @font-face {
-    font-family: 'Kalamaya';
-    src: url('fonts/Kalamaya-Regular.woff2') format('woff2'),
-         url('fonts/Kalamaya-Regular.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-}
-
-body {
-    font-family: 'Kalamaya', sans-serif;
-}
-
-        /* Parallax Background Image */
-        .parallax {
-            /* The image used */
-            background-image: url('https://your-image-url-here.jpg');
-
-            /* Full height */
-            height: 500px;
-
-            /* Create the parallax effect */
-            background-attachment: fixed;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
+    <title>Gyroscopic Game</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #282c34;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        h1, h2 {
-            text-align: center;
-            color: #ff5733;
-        }
-
-        h1 {
-            font-family: 'Monoton', cursive;
-            font-size: 3em;
-        }
-
-        .section {
-            margin-bottom: 30px;
-        }
-
-        .section h2 {
-            border-bottom: 2px solid #ff5733;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #ff5733;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #e03e2d;
-        }
-
-        /* Job Description Styles */
-        .job-header {
-            cursor: pointer;
-            padding: 10px;
-            background-color: #ff5733;
-            color: #fff;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-        .job-details {
-            display: none;
-            padding: 10px;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            margin-bottom: 20px;
+        canvas {
+            border: 2px solid #fff;
         }
     </style>
 </head>
 <body>
-
-    <!-- Parallax Section -->
-    <div class="parallax"></div>
-
-    <div class="container">
-        <h1>My Resume</h1>
-
-  <div class="section contact">
-            <h2>Contact Information</h2>
-            <p>Email: <a href="mailto:cinclaration@gmail.com">cinclaration@gmail.com</a></p>
-            <p>GitHub: <a href="https://github.com/cinclaration" target="_blank">github.com/cinclaration</a></p>
-        </div>
-
-        <div class="section">
-            <h2>Job Experience</h2>
-            <!-- Job 1 -->
-            <div class="job-header" onclick="toggleJobDetails('job1')">
-                GeaRelic LLC - Owner (2018 - Present)
-            </div>
-            <div class="job-details" id="job1">
-                <p>Skills: Microcontroller Programming, Product Design, 3D Printing</p>
-                <p>Responsibilities: Managed product development, created unique electronic staff designs, and led a small team.</p>
-            </div>
-
-            <!-- Job 2 -->
-            <div class="job-header" onclick="toggleJobDetails('job2')">
-                Dunkin' Donuts - Part-time Donut Maker (2024 - Present)
-            </div>
-            <div class="job-details" id="job2">
-                <p>Skills: Creative Donut Design, Icing Techniques</p>
-                <p>Responsibilities: Prepared and decorated donuts, collaborated on special event donuts for Halloween.</p>
-            </div>
-
-            <!-- Add more jobs here as needed -->
-        </div>
-    </div>
-
-    <!-- Parallax Section (Optional, can add more sections if needed) -->
-    <div class="parallax"></div>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        // JavaScript for job details toggle
-        function toggleJobDetails(jobId) {
-            var jobDetails = document.getElementById(jobId);
-            if (jobDetails.style.display === "block") {
-                jobDetails.style.display = "none";
-            } else {
-                jobDetails.style.display = "block";
-            }
+        // Get the canvas and its context
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas dimensions
+        canvas.width = window.innerWidth * 0.9;
+        canvas.height = window.innerHeight * 0.8;
+
+        // Ball properties
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            color: "#ff5733",
+            dx: 0, // x velocity
+            dy: 0, // y velocity
+        };
+
+        // Game loop
+        function gameLoop() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the ball
+            drawBall();
+
+            // Update ball position
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Keep the ball within the canvas bounds
+            if (ball.x - ball.radius < 0) ball.x = ball.radius;
+            if (ball.x + ball.radius > canvas.width) ball.x = canvas.width - ball.radius;
+            if (ball.y - ball.radius < 0) ball.y = ball.radius;
+            if (ball.y + ball.radius > canvas.height) ball.y = canvas.height - ball.radius;
+
+            // Request the next frame
+            requestAnimationFrame(gameLoop);
         }
+
+        // Draw the ball
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = ball.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // Gyroscope event listener
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener("deviceorientation", handleOrientation);
+        } else {
+            alert("Gyroscope not supported on this device");
+        }
+
+        function handleOrientation(event) {
+            const { beta, gamma } = event; // Tilt front-back (beta), left-right (gamma)
+
+            // Map the beta (front-back tilt) to y velocity
+            ball.dy = beta / 10;
+
+            // Map the gamma (left-right tilt) to x velocity
+            ball.dx = gamma / 10;
+        }
+
+        // Start the game loop
+        gameLoop();
     </script>
-
 </body>
-</html> 
-
-
+</html>
