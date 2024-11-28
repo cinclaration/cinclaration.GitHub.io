@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Drift</title>
+  <title>Cosmic Drift Game</title>
   <style>
     body {
       margin: 0;
@@ -81,8 +81,7 @@
 
     // Game Variables
     let spaceship = { x: 400, y: 300, size: 50, angle: 0 };
-    let backgroundPosition = { x: 0, y: 0 };
-    const playSpace = { width: 1600, height: 1200 }; // Fixed play space size
+    const playSpace = { width: 1600, height: 1200 };
     let score = 0;
     let timer = 30;
     let goals = [];
@@ -128,15 +127,15 @@
       timer = 30;
       goals = [];
       obstacles = [];
-      spawnEntity(goals, 50, 5); // 5 Goals
-      spawnEntity(obstacles, 50, 5); // 5 Obstacles
+      spawnEntities(goals, 5, 50);
+      spawnEntities(obstacles, 5, 50);
       scoreElement.textContent = score;
       timerElement.textContent = timer;
       isPaused = false;
     }
 
-    // Prevent Overlaps
-    function spawnEntity(entityArray, size, count) {
+    // Prevent Overlaps and Spawn Entities
+    function spawnEntities(entityArray, count, size) {
       for (let i = 0; i < count; i++) {
         let entity;
         do {
@@ -145,7 +144,7 @@
             y: Math.random() * playSpace.height,
             size: size,
           };
-        } while (entityArray.some((e) => isColliding(e, entity)));
+        } while (entityArray.some(e => isColliding(e, entity)));
         entityArray.push(entity);
       }
     }
@@ -162,36 +161,22 @@
 
     // Draw Background
     function drawBackground() {
-      ctx.drawImage(
-        backgroundImg,
-        backgroundPosition.x,
-        backgroundPosition.y,
-        playSpace.width,
-        playSpace.height,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+      ctx.drawImage(backgroundImg, 0, 0, playSpace.width, playSpace.height, 0, 0, canvas.width, canvas.height);
     }
 
     // Draw Entities
     function drawEntities(entityArray, image) {
-      entityArray.forEach((entity) => {
+      entityArray.forEach(entity => {
         ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
       });
     }
 
     // Draw Spaceship
     function drawSpaceship() {
-      ctx.save();
-      ctx.translate(spaceship.x, spaceship.y);
-      ctx.rotate(spaceship.angle);
-      ctx.drawImage(spaceshipImg, -spaceship.size / 2, -spaceship.size / 2, spaceship.size, spaceship.size);
-      ctx.restore();
+      ctx.drawImage(spaceshipImg, spaceship.x, spaceship.y, spaceship.size, spaceship.size);
     }
 
-    // Update Game State
+    // Update Game
     function updateGame() {
       if (timer > 0 && !isPaused) {
         timer -= 1 / 60;
@@ -219,7 +204,7 @@
       });
     }
 
-    // Main Game Loop
+    // Game Loop
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
