@@ -102,36 +102,53 @@
             speed: 0.05,
             img: new Image(),
         };
-        ball.img.src = 'https://via.placeholder.com/50/3498DB?text=Ball';
+        ball.img.src = 'https://via.placeholder.com/50/3498DB?text=BallTexture';
 
         // Goals
-        const goals = Array.from({ length: 3 }, () => ({
-            x: Math.random() * (canvas.width - 50),
-            y: Math.random() * (canvas.height - 50),
-            width: 30,
-            height: 30,
-            img: new Image(),
-        }));
-        goals.forEach(goal => (goal.img.src = 'https://via.placeholder.com/50/8E44AD?text=Goal'));
+        const goals = [];
+        const goalImg = new Image();
+        goalImg.src = 'https://via.placeholder.com/50/8E44AD?text=GoalTexture';
 
         // Obstacles
-        const obstacles = Array.from({ length: 3 }, () => ({
-            x: Math.random() * (canvas.width - 30),
-            y: Math.random() * (canvas.height - 30),
-            radius: 20,
-            color: '#E74C3C',
-        }));
-
-        // Power-ups
-        const powerUps = Array.from({ length: 2 }, () => ({
-            x: Math.random() * (canvas.width - 30),
-            y: Math.random() * (canvas.height - 30),
-            radius: 15,
-            color: '#F1C40F',
-        }));
-
+        const obstacles = [];
+        const powerUps = [];
         let score = 0;
+        let level = 1;
         let isPaused = false;
+
+        function createGoals() {
+            goals.splice(0, goals.length, ...Array.from({ length: level + 2 }, () => ({
+                x: Math.random() * (canvas.width - 50),
+                y: Math.random() * (canvas.height - 50),
+                width: 30,
+                height: 30,
+            })));
+        }
+
+        function createObstacles() {
+            obstacles.splice(0, obstacles.length, ...Array.from({ length: level + 1 }, () => ({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                radius: 20,
+                color: '#E74C3C',
+            })));
+        }
+
+        function createPowerUps() {
+            powerUps.splice(0, powerUps.length, ...Array.from({ length: level }, () => ({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                radius: 15,
+                color: '#F1C40F',
+            })));
+        }
+
+        function nextLevel() {
+            level++;
+            createGoals();
+            createObstacles();
+            createPowerUps();
+        }
 
         // Gyroscope controls
         if (window.DeviceOrientationEvent) {
@@ -189,7 +206,7 @@
         // Draw goals
         function drawGoals() {
             goals.forEach(goal => {
-                ctx.drawImage(goal.img, goal.x, goal.y, goal.width, goal.height);
+                ctx.drawImage(goalImg, goal.x, goal.y, goal.width, goal.height);
             });
         }
 
@@ -228,6 +245,10 @@
                     score += 10;
                     document.getElementById('score').textContent = score;
                     goals.splice(index, 1); // Remove the collected goal
+
+                    if (goals.length === 0) {
+                        nextLevel(); // Advance to next level when all goals are collected
+                    }
                 }
             });
 
@@ -235,7 +256,7 @@
             obstacles.forEach(obstacle => {
                 const dist = Math.hypot(ball.x - obstacle.x, ball.y - obstacle.y);
                 if (dist < ball.radius + obstacle.radius) {
-                    score -= 5;
+                    score -= 10;
                     document.getElementById('score').textContent = score;
                 }
             });
@@ -253,8 +274,8 @@
 
         // Menu logic
         const menuLogo = document.getElementById('menuLogo');
-        const menuBox = document.getElementById('menuBox');
-        menuLogo.addEventListener('click', () => {
+        const menuBox = document.getElementById('menuBox);
+menuLogo.addEventListener('click', () => {
             menuBox.style.display = menuBox.style.display === 'none' ? 'block' : 'none';
         });
 
@@ -269,39 +290,26 @@
             ball.dx = 0;
             ball.dy = 0;
             score = 0;
+            level = 1;
             document.getElementById('score').textContent = score;
 
-            // Reset goals, obstacles, and power-ups
-            goals.splice(0, goals.length, ...Array.from({ length: 3 }, () => ({
-                x: Math.random() * (canvas.width - 50),
-                y: Math.random() * (canvas.height - 50),
-                width: 30,
-                height: 30,
-                img: new Image(),
-            })));
-            goals.forEach(goal => (goal.img.src = 'https://via.placeholder.com/50/8E44AD?text=Goal'));
-
-            obstacles.splice(0, obstacles.length, ...Array.from({ length: 3 }, () => ({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 20,
-                color: '#E74C3C',
-            })));
-
-            powerUps.splice(0, powerUps.length, ...Array.from({ length: 2 }, () => ({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 15,
-                color: '#F1C40F',
-            })));
+            // Reset all elements
+            createGoals();
+            createObstacles();
+            createPowerUps();
 
             isPaused = false;
             gameLoop();
         }
 
         function showInstructions() {
-            alert('Tilt your phone to move the ball. Reach the goals to increase your score! Avoid obstacles and collect power-ups for bonuses.');
+            alert('Tilt your phone to move the ball. Collect goals to increase your score and advance to the next level. Avoid obstacles (lose 10 points) and collect power-ups (gain 20 points) for bonuses!');
         }
+
+        // Initialize game elements
+        createGoals();
+        createObstacles();
+        createPowerUps();
 
         // Start the game
         gameLoop();
