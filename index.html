@@ -1,169 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Drift - Home</title>
-  <style>
-    /* General Reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      overflow-x: hidden;
-    }
-
-    /* Animated Background */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('https://i.imgur.com/G7kkshE.jpeg') no-repeat center center fixed;
-      background-size: cover;
-      filter: blur(5px) brightness(0.7);
-      z-index: -1;
-    }
-
-    header {
-      padding: 20px;
-      text-align: center;
-    }
-
-    header img {
-      width: 120px;
-      height: auto;
-    }
-
-    header h1 {
-      font-size: 3em;
-      margin: 15px 0;
-      color: #78c0e0;
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin: 20px 0;
-    }
-
-    nav a {
-      text-decoration: none;
-      color: white;
-      background-color: #007bff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 1.2em;
-      transition: background-color 0.3s, transform 0.2s;
-    }
-
-    nav a:hover {
-      background-color: #0056b3;
-      transform: scale(1.1);
-    }
-
-    /* Main Section */
-    main {
-      flex: 1;
-      width: 80%;
-      max-width: 1200px;
-      margin: 20px auto;
-    }
-
-    .section {
-      margin: 30px 0;
-    }
-
-    .section h2 {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-      color: #e0e1dd;
-    }
-
-    .section p {
-      font-size: 1.2em;
-      margin-bottom: 20px;
-      color: #cdd3d8;
-    }
-
-    .button {
-      display: inline-block;
-      padding: 15px 30px;
-      font-size: 1.2em;
-      font-weight: bold;
-      color: white;
-      background-color: #007bff;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-    .button:hover {
-      background-color: #0056b3;
-      transform: scale(1.1);
-    }
-
-    /* Footer */
-    footer {
-      padding: 20px;
-      background-color: #0d1b2a;
-      font-size: 0.9em;
-      color: #a9a9a9;
-      width: 100%;
-    }
-
-    footer a {
-      color: #78c0e0;
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <img src="https://i.imgur.com/fINCGcJ.png" alt="Logo">
-    <h1>Cosmic Drift</h1>
-  </header>
-  <nav>
-    <a href="Game.html">Play Cosmic Drift</a>
-    <a href="https://www.gearelic.com">Visit GeaRelic Store</a>
-    <a href="#portal">Product Development Portal</a>
+<!-- SECTION 1: HEADER -->
+<header style="background: linear-gradient(to right, #0d1b2a, #1b263b); padding: 20px; display: flex; justify-content: space-between; align-items: center; color: white;">
+  <div style="display: flex; align-items: center; gap: 20px;">
+    <img src="https://i.imgur.com/fINCGcJ.png" alt="Logo" style="width: 80px; height: auto;">
+    <h1 style="margin: 0; font-size: 2.5em;">Cosmic Drift</h1>
+  </div>
+  <nav style="display: flex; gap: 20px;">
+    <a href="Game.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px 15px; border-radius: 5px; background: #007bff; transition: 0.3s;">
+      Play Game
+    </a>
+    <a href="ProductPortal.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px 15px; border-radius: 5px; background: #28a745; transition: 0.3s;">
+      Products
+    </a>
+    <a href="OrderTracking.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px 15px; border-radius: 5px; background: #ffc107; transition: 0.3s;">
+      Track Order
+    </a>
+    <a href="AdminLogin.html" style="color: white; text-decoration: none; font-size: 1.2em; padding: 10px 15px; border-radius: 5px; background: #dc3545; transition: 0.3s;">
+      Admin Login
+    </a>
   </nav>
-  <main>
-    <!-- Game and Store Description -->
-    <section class="section">
-      <h2>Welcome to Cosmic Drift</h2>
-      <p>Dive into the vast universe and explore a thrilling space adventure. Click below to play the game or shop for exclusive items in our store!</p>
-      <a href="Game.html" class="button">Play Now</a>
-      <a href="https://www.gearelic.com" class="button">Visit Store</a>
-    </section>
+</header>
 
-    <!-- Product Development Portal -->
-    <section id="portal" class="section">
-      <h2>Product Development Portal</h2>
-      <p>Track your orders, manage products, and explore the latest updates from our team.</p>
-      <a href="AdminLogin.html" class="button">Admin Login</a>
-      <a href="OrderTracking.html" class="button">Track My Order</a>
-    </section>
-  </main>
-  <footer>
-    <p>© 2024 <a href="https://www.gearelic.com">GeaRelic</a>. All rights reserved.</p>
-  </footer>
-</body>
-</html>
+<!-- SECTION 2: HERO SECTION -->
+<section style="height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(to bottom, #1b263b, #415a77); color: white;">
+  <h2 style="font-size: 3em; margin-bottom: 20px;">Welcome to Cosmic Drift</h2>
+  <p style="font-size: 1.5em; max-width: 700px; margin-bottom: 30px;">
+    Embark on an interstellar adventure! Play our exciting space-themed game or explore our store for cosmic products.
+  </p>
+  <div style="display: flex; gap: 20px;">
+    <a href="Game.html" style="text-decoration: none; color: white; background: #007bff; padding: 15px 25px; border-radius: 5px; font-size: 1.2em; transition: 0.3s;">
+      Play Now
+    </a>
+    <a href="ProductPortal.html" style="text-decoration: none; color: white; background: #28a745; padding: 15px 25px; border-radius: 5px; font-size: 1.2em; transition: 0.3s;">
+      Explore Products
+    </a>
+  </div>
+</section>
+
+
+
+<!-- SECTION 3: FEATURES -->
+<section style="background: linear-gradient(to right, #1b263b, #415a77); color: white; padding: 50px; display: flex; flex-wrap: wrap; gap: 30px; justify-content: center;">
+  <div style="width: 300px; background: rgba(0, 0, 0, 0.7); border-radius: 10px; padding: 20px; text-align: center;">
+    <h3 style="font-size: 1.8em; margin-bottom: 15px;">Thrilling Gameplay</h3>
+    <p>Test your skills and reflexes in our fast-paced, immersive space game.</p>
+    <a href="Game.html" style="color: #007bff; text-decoration: none; font-size: 1.1em;">Learn More</a>
+  </div>
+  <div style="width: 300px; background: rgba(0, 0, 0, 0.7); border-radius: 10px; padding: 20px; text-align: center;">
+    <h3 style="font-size: 1.8em; margin-bottom: 15px;">Exclusive Products</h3>
+    <p>Discover our collection of unique cosmic-themed merchandise.</p>
+    <a href="ProductPortal.html" style="color: #28a745; text-decoration: none; font-size: 1.1em;">Browse Now</a>
+  </div>
+  <div style="width: 300px; background: rgba(0, 0, 0, 0.7); border-radius: 10px; padding: 20px; text-align: center;">
+    <h3 style="font-size: 1.8em; margin-bottom: 15px;">Track Your Orders</h3>
+    <p>Easily track the status of your orders in real-time.</p>
+    <a href="OrderTracking.html" style="color: #ffc107; text-decoration: none; font-size: 1.1em;">Track Now</a>
+  </div>
+</section>
+
+<!-- SECTION 4: CALL TO ACTION -->
+<section style="padding: 50px; text-align: center; background: linear-gradient(to bottom, #415a77, #1b263b); color: white;">
+  <h2 style="font-size: 2.5em; margin-bottom: 20px;">Ready to Explore the Cosmos?</h2>
+  <p style="font-size: 1.2em; margin-bottom: 30px;">Join us on a journey beyond the stars. Play now or visit our store!</p>
+  <div style="display: flex; gap: 20px; justify-content: center;">
+    <a href="Game.html" style="text-decoration: none; color: white; background: #007bff; padding: 15px 25px; border-radius: 5px; font-size: 1.2em; transition: 0.3s;">
+      Play Game
+    </a>
+    <a href="ProductPortal.html" style="text-decoration: none; color: white; background: #28a745; padding: 15px 25px; border-radius: 5px; font-size: 1.2em; transition: 0.3s;">
+      Visit Store
+    </a>
+  </div>
+</section>
+
+
+<!-- SECTION 5: FOOTER -->
+<footer style="background: #0d1b2a; padding: 20px; text-align: center; color: #a9a9a9;">
+  <p>© 2024 <a href="https://www.gearelic.com" style="color: #78c0e0; text-decoration: none;">GeaRelic</a>. All rights reserved.</p>
+  <p><a href="AdminLogin.html" style="color: #78c0e0; text-decoration: none;">Admin Login</a> | <a href="OrderTracking.html" style="color: #78c0e0; text-decoration: none;">Track My Order</a></p>
+</footer>
+
