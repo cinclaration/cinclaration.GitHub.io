@@ -3,39 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Drift</title>
+  <title>Cosmic Drift - Landing Page</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Arial', sans-serif;
-      color: white;
+      font-family: Arial, sans-serif;
       background: linear-gradient(to bottom, #0d1b2a, #1b263b, #415a77, #778da9);
+      color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
       height: 100vh;
-    }
-
-    header {
-      width: 100%;
-      padding: 20px;
-      background-color: #0d1b2a;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
       text-align: center;
     }
 
-    header h1 {
-      margin: 0;
-      font-size: 2.5em;
-      letter-spacing: 2px;
-      color: #78c0e0;
+    header {
+      margin-top: 20px;
     }
 
-    header p {
-      margin: 5px 0;
-      font-size: 1em;
-      color: #d9e8f5;
+    header img {
+      width: 100px;
+      height: auto;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin: 10px 0;
+      color: #78c0e0;
     }
 
     main {
@@ -44,44 +39,39 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-    }
-
-    main h2 {
-      font-size: 2em;
-      margin-bottom: 20px;
+      gap: 20px;
     }
 
     main p {
       font-size: 1.2em;
-      margin-bottom: 40px;
       color: #e0e1dd;
+      margin: 10px 0;
     }
 
-    .play-button {
+    .button {
       display: inline-block;
       padding: 15px 30px;
-      font-size: 1.5em;
+      font-size: 1.2em;
       font-weight: bold;
-      text-decoration: none;
       color: white;
       background-color: #007bff;
       border-radius: 8px;
+      text-decoration: none;
       transition: background-color 0.3s ease, transform 0.2s ease;
+      cursor: pointer;
     }
 
-    .play-button:hover {
+    .button:hover {
       background-color: #0056b3;
       transform: scale(1.1);
     }
 
     footer {
-      width: 100%;
-      padding: 10px;
+      padding: 20px;
       background-color: #0d1b2a;
-      text-align: center;
       font-size: 0.9em;
       color: #a9a9a9;
+      width: 100%;
     }
 
     footer a {
@@ -96,13 +86,13 @@
 </head>
 <body>
   <header>
+    <img src="https://i.imgur.com/fINCGcJ.png" alt="Logo">
     <h1>Cosmic Drift</h1>
-    <p>Experience the thrill of space exploration</p>
   </header>
   <main>
-    <h2>Welcome to Cosmic Drift</h2>
-    <p>Dive into the vast universe, collect objectives, and dodge obstacles. Are you ready?</p>
-    <a href="game.html" class="play-button">Play Now</a>
+    <p>Welcome to Cosmic Drift, a thrilling space adventure game!</p>
+    <a href="Game.html" class="button">Play Cosmic Drift</a>
+    <a href="https://www.gearelic.com" class="button">Visit GeaRelic</a>
   </main>
   <footer>
     <p>© 2024 <a href="https://www.gearelic.com">GeaRelic</a>. All rights reserved.</p>
