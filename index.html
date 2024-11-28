@@ -3,252 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Drift Game</title>
+  <title>Cosmic Drift</title>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background-color: black;
-    }
-
-    #menu-button {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 50px;
-      height: 50px;
-      cursor: pointer;
-      z-index: 10;
-    }
-
-    #dropdown-menu {
-      position: absolute;
-      top: 70px;
-      left: 10px;
-      background-color: rgba(0, 0, 0, 0.8);
+      font-family: 'Arial', sans-serif;
       color: white;
-      border: 1px solid #fff;
-      padding: 10px;
-      border-radius: 5px;
-      display: none;
-      z-index: 10;
+      background: linear-gradient(to bottom, #0d1b2a, #1b263b, #415a77, #778da9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      height: 100vh;
     }
 
-    #dropdown-menu button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 10px;
-      margin: 5px 0;
+    header {
       width: 100%;
-      cursor: pointer;
-      border-radius: 5px;
+      padding: 20px;
+      background-color: #0d1b2a;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      text-align: center;
     }
 
-    #dropdown-menu button:hover {
-      background-color: #0056b3;
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+      letter-spacing: 2px;
+      color: #78c0e0;
     }
 
-    #start-button {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    header p {
+      margin: 5px 0;
+      font-size: 1em;
+      color: #d9e8f5;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    main h2 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    main p {
+      font-size: 1.2em;
+      margin-bottom: 40px;
+      color: #e0e1dd;
+    }
+
+    .play-button {
+      display: inline-block;
       padding: 15px 30px;
-      font-size: 24px;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-decoration: none;
+      color: white;
       background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 10;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
-    #start-button:hover {
+    .play-button:hover {
       background-color: #0056b3;
+      transform: scale(1.1);
     }
 
-    #scoreboard {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: white;
-      font-size: 20px;
-      z-index: 10;
+    footer {
+      width: 100%;
+      padding: 10px;
+      background-color: #0d1b2a;
+      text-align: center;
+      font-size: 0.9em;
+      color: #a9a9a9;
+    }
+
+    footer a {
+      color: #78c0e0;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-  <img id="menu-button" src="https://i.imgur.com/fINCGcJ.png" alt="Menu">
-  <div id="dropdown-menu">
-    <button id="toggle-controls">Enable Gyroscope</button>
-    <button id="restart-game">Restart Game</button>
-  </div>
-  <div id="scoreboard">
-    <p>Score: <span id="score">0</span></p>
-    <p>Time Left: <span id="timer">30</span></p>
-  </div>
-  <button id="start-button">Start Game</button>
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const menuButton = document.getElementById('menu-button');
-    const dropdownMenu = document.getElementById('dropdown-menu');
-    const toggleControlsButton = document.getElementById('toggle-controls');
-    const restartButton = document.getElementById('restart-game');
-    const startButton = document.getElementById('start-button');
-    const scoreElement = document.getElementById('score');
-    const timerElement = document.getElementById('timer');
-
-    // Game Variables
-    let spaceship = { x: 400, y: 300, size: 50, angle: 0 };
-    let backgroundPosition = { x: 0, y: 0 };
-    const playSpace = { width: 1600, height: 1200 }; // Fixed play space size
-    let score = 0;
-    let timer = 30;
-    let goals = [];
-    let obstacles = [];
-    let bonus = [];
-    let isPaused = true;
-    let gyroscopeEnabled = false;
-
-    // Asset URLs
-    const spaceshipImg = new Image();
-    spaceshipImg.src = 'https://i.imgur.com/x87KCsX.png';
-
-    const goalImg = new Image(); // Planet for objectives
-    goalImg.src = 'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png';
-
-    const obstacleImg = new Image(); // Asteroid for obstacles
-    obstacleImg.src = 'https://upload.wikimedia.org/wikipedia/commons/3/39/Asteroid.png';
-
-    const bonusImg = new Image(); // Star for bonus
-    bonusImg.src = 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Star_icon.png';
-
-    const backgroundImg = new Image();
-    backgroundImg.src = 'https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp';
-
-    // Canvas Initialization
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Toggle Dropdown Menu
-    menuButton.addEventListener('click', () => {
-      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
-    });
-
-    // Restart Game
-    restartButton.addEventListener('click', () => {
-      resetGame();
-      dropdownMenu.style.display = 'none';
-    });
-
-    // Toggle Gyroscope
-    toggleControlsButton.addEventListener('click', () => {
-      gyroscopeEnabled = !gyroscopeEnabled;
-      toggleControlsButton.textContent = gyroscopeEnabled ? 'Disable Gyroscope' : 'Enable Gyroscope';
-      dropdownMenu.style.display = 'none';
-    });
-
-    // Reset Game
-    function resetGame() {
-      score = 0;
-      timer = 30;
-      goals = [];
-      obstacles = [];
-      bonus = [];
-      spawnEntity(goals, 50, 5);
-      spawnEntity(obstacles, 50, 5);
-      spawnEntity(bonus, 70, 1);
-      scoreElement.textContent = score;
-      timerElement.textContent = timer;
-    }
-
-    // Prevent Overlaps
-    function spawnEntity(entityArray, size, count) {
-      for (let i = 0; i < count; i++) {
-        let entity;
-        do {
-          entity = {
-            x: Math.random() * playSpace.width,
-            y: Math.random() * playSpace.height,
-            size: size,
-          };
-        } while (entityArray.some((e) => isColliding(e, entity)));
-        entityArray.push(entity);
-      }
-    }
-
-    // Collision Detection
-    function isColliding(a, b) {
-      return (
-        a.x < b.x + b.size &&
-        a.x + a.size > b.x &&
-        a.y < b.y + b.size &&
-        a.y + a.size > b.y
-      );
-    }
-
-    // Draw Entities
-    function drawEntities(entityArray, image) {
-      entityArray.forEach((entity) => {
-        ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
-      });
-    }
-
-    // Draw Background
-    function drawBackground() {
-      ctx.drawImage(
-        backgroundImg,
-        backgroundPosition.x,
-        backgroundPosition.y,
-        playSpace.width,
-        playSpace.height,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-    }
-
-    // Update Game State
-    function updateGame() {
-      if (timer > 0 && !isPaused) {
-        timer -= 1 / 60;
-        timerElement.textContent = Math.floor(timer);
-      } else if (timer <= 0) {
-        isPaused = true;
-        alert('Game Over! Final Score: ' + score);
-      }
-    }
-
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!isPaused) {
-        drawBackground();
-        drawEntities(goals, goalImg);
-        drawEntities(obstacles, obstacleImg);
-        drawEntities(bonus, bonusImg);
-        updateGame();
-      }
-      requestAnimationFrame(gameLoop);
-    }
-
-    // Start Button
-    startButton.addEventListener('click', () => {
-      isPaused = false;
-      startButton.style.display = 'none';
-    });
-
-    resetGame();
-    gameLoop();
-  </script>
+  <header>
+    <h1>Cosmic Drift</h1>
+    <p>Experience the thrill of space exploration</p>
+  </header>
+  <main>
+    <h2>Welcome to Cosmic Drift</h2>
+    <p>Dive into the vast universe, collect objectives, and dodge obstacles. Are you ready?</p>
+    <a href="game.html" class="play-button">Play Now</a>
+  </main>
+  <footer>
+    <p>© 2024 <a href="https://www.gearelic.com">GeaRelic</a>. All rights reserved.</p>
+  </footer>
 </body>
 </html>
