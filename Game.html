@@ -1,3 +1,4 @@
+<!-- SECTION 1: HTML STRUCTURE AND BASIC SETUP -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,6 +72,9 @@
     <p>Score: <span id="score">0</span></p>
     <p>Time Left: <span id="timer">30</span></p>
   </div>
+
+
+<!-- SECTION 2: JAVASCRIPT SETUP AND INITIAL VARIABLES -->
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -113,9 +117,15 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Dropdown Menu
+    // Dropdown Menu Toggle
     menuButton.addEventListener('click', () => {
       dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Restart Game
+    restartButton.addEventListener('click', () => {
+      resetGame();
+      dropdownMenu.style.display = 'none';
     });
 
     // Toggle Controls
@@ -125,21 +135,19 @@
         ? 'Switch to Touch'
         : 'Switch to Gyroscope';
     });
+  </script>
 
-    // Restart Game
-    restartButton.addEventListener('click', () => {
-      resetGame();
-      dropdownMenu.style.display = 'none';
-    });
 
+<!-- SECTION 3: RESET GAME AND ENTITY SPAWNING -->
+  <script>
     // Reset Game
     function resetGame() {
       score = 0;
       timer = 30;
       goals = [];
       obstacles = [];
-      spawnEntities(goals, 5, 50);
-      spawnEntities(obstacles, 5, 50);
+      spawnEntities(goals, 5, 50); // Spawn 5 goals
+      spawnEntities(obstacles, 5, 50); // Spawn 5 obstacles
       scoreElement.textContent = score;
       timerElement.textContent = timer;
       spaceship.x = canvas.width / 2;
@@ -173,13 +181,27 @@
         a.y + a.size > b.y
       );
     }
+  </script>
 
+
+<!-- SECTION 4: GAME LOOP AND RENDERING -->
+  <script>
     // Draw Background
     function drawBackground() {
-      ctx.drawImage(backgroundImg, 0, 0, playArea.width, playArea.height, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(
+        backgroundImg,
+        0,
+        0,
+        playArea.width,
+        playArea.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
     }
 
-    // Draw Entities
+    // Draw Entities (Goals and Obstacles)
     function drawEntities(entityArray, image) {
       entityArray.forEach(entity => {
         ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
@@ -191,11 +213,17 @@
       ctx.save();
       ctx.translate(spaceship.x, spaceship.y);
       ctx.rotate(spaceship.angle);
-      ctx.drawImage(spaceshipImg, -spaceship.size / 2, -spaceship.size / 2, spaceship.size, spaceship.size);
+      ctx.drawImage(
+        spaceshipImg,
+        -spaceship.size / 2,
+        -spaceship.size / 2,
+        spaceship.size,
+        spaceship.size
+      );
       ctx.restore();
     }
 
-    // Update Game State
+    // Update Game
     function updateGame() {
       if (timer > 0 && !isPaused) {
         timer -= 1 / 60;
@@ -221,12 +249,6 @@
           obstacles.splice(index, 1);
         }
       });
-
-      // Update Spaceship Position
-      if (gyroscopeEnabled) {
-        spaceship.x += spaceship.speedX;
-        spaceship.y += spaceship.speedY;
-      }
     }
 
     // Game Loop
@@ -243,9 +265,44 @@
 
       requestAnimationFrame(gameLoop);
     }
+  </script>
 
+
+<!-- SECTION 5: INPUT CONTROLS (TOUCH AND GYROSCOPE) -->
+  <script>
+    // Touch Controls
+    canvas.addEventListener('mousemove', (e) => {
+      if (!gyroscopeEnabled && !isPaused) {
+        const rect = canvas.getBoundingClientRect();
+        spaceship.x = e.clientX - rect.left;
+        spaceship.y = e.clientY - rect.top;
+      }
+    });
+
+    // Gyroscope Controls
+    window.addEventListener('deviceorientation', (event) => {
+      if (gyroscopeEnabled && !isPaused) {
+        const sensitivity = 0.2; // Adjust this value for gyroscope sensitivity
+        spaceship.speedX = event.gamma * sensitivity; // Tilt left/right
+        spaceship.speedY = event.beta * sensitivity; // Tilt forward/backward
+
+        spaceship.x += spaceship.speedX;
+        spaceship.y += spaceship.speedY;
+
+        // Keep spaceship within bounds
+        spaceship.x = Math.max(0, Math.min(canvas.width, spaceship.x));
+        spaceship.y = Math.max(0, Math.min(canvas.height, spaceship.y));
+      }
+    });
+  </script>
+
+
+<!-- SECTION 6: GAME INITIALIZATION AND EXECUTION -->
+  <script>
     // Initialize Game
-    resetGame();
+    resetGame(); // Reset game state and spawn entities
+
+    // Start Game Loop
     gameLoop();
   </script>
 </body>
