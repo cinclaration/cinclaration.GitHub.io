@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gyroscopic Game</title>
     <style>
-        /* General Styles */
         body, html {
             margin: 0;
             padding: 0;
@@ -24,25 +23,20 @@
         .scoreboard {
             position: absolute;
             top: 10px;
-            left: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             font-family: Arial, sans-serif;
             color: white;
-            font-size: 24px;
+            font-size: 30px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             z-index: 100;
         }
 
-        /* Floating Menu Styles */
-        .menu-button {
+        .menu-logo {
             position: absolute;
             top: 10px;
             right: 10px;
-            background-color: #ff5733;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 18px;
             cursor: pointer;
             z-index: 200;
         }
@@ -79,7 +73,7 @@
 </head>
 <body>
     <div class="scoreboard">Score: <span id="score">0</span></div>
-    <button class="menu-button" id="menuButton">☰</button>
+    <img src="your-logo-url.png" class="menu-logo" id="menuLogo" alt="Menu Logo" width="50" height="50">
     <div class="menu-box" id="menuBox">
         <button onclick="pauseGame()">Pause Game</button>
         <button onclick="restartGame()">Restart Game</button>
@@ -91,131 +85,190 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Adjust canvas to screen size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
+        // Canvas dimensions
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        // Game elements
+        // Ball properties
         const ball = {
             x: canvas.width / 2,
             y: canvas.height / 2,
             radius: 20,
             dx: 0,
             dy: 0,
-            speed: 10,
-            img: new Image()
+            friction: 0.98,
+            speed: 0.2,
+            img: new Image(),
         };
-        ball.img.src = 'https://via.placeholder.com/40'; // Replace with your ball skin URL
+        ball.img.src = 'your-ball-skin-url.png'; // Replace with your ball skin URL
 
+        // Goal properties
         const goal = {
             x: Math.random() * (canvas.width - 50),
             y: Math.random() * (canvas.height - 50),
             width: 50,
             height: 50,
-            color: "green"
+            img: new Image(),
         };
+        goal.img.src = 'your-goal-image-url.png'; // Replace with your goal image URL
+
+        // Power-ups and obstacles
+        const powerUps = [];
+        const obstacles = [];
+        for (let i = 0; i < 3; i++) {
+            powerUps.push({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                radius: 15,
+                color: 'gold',
+            });
+            obstacles.push({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                radius: 20,
+                color: 'red',
+            });
+        }
 
         let score = 0;
         let isPaused = false;
 
+        // Gyroscope controls
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', handleOrientation);
+        } else {
+            alert('Gyroscope not supported on this device');
+        }
+
+        function handleOrientation(event) {
+            if (isPaused) return;
+
+            const { beta, gamma } = event;
+            ball.dx += gamma * ball.speed;
+            ball.dy += beta * ball.speed;
+        }
+
         // Game loop
         function gameLoop() {
-            if (isPaused) return; // Skip the game loop if paused
+            if (isPaused) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the ball
-            drawBall();
-
-            // Draw the goal
-            drawGoal();
+            // Apply friction
+            ball.dx *= ball.friction;
+            ball.dy *= ball.friction;
 
             // Update ball position
             ball.x += ball.dx;
             ball.y += ball.dy;
 
-            // Keep the ball within the canvas bounds
-            if (ball.x < ball.radius) ball.x = ball.radius;
-            if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
-            if (ball.y < ball.radius) ball.y = ball.radius;
-            if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
+            // Draw elements
+            drawBall();
+            drawGoal();
+            drawPowerUps();
+            drawObstacles();
 
-            // Check collision with the goal
+            // Check collisions
+            checkCollisions();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Draw ball
+        function drawBall() {
+            ctx.drawImage(ball.img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
+        }
+
+        // Draw goal
+        function drawGoal() {
+            ctx.drawImage(goal.img, goal.x, goal.y, goal.width, goal.height);
+        }
+
+        // Draw power-ups
+        function drawPowerUps() {
+            powerUps.forEach((p) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        // Draw obstacles
+        function drawObstacles() {
+            obstacles.forEach((o) => {
+                ctx.beginPath();
+                ctx.arc(o.x, o.y, o.radius, 0, Math.PI * 2);
+                ctx.fillStyle = o.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        // Check collisions
+        function checkCollisions() {
+            // Ball and goal
             if (
                 ball.x + ball.radius > goal.x &&
                 ball.x - ball.radius < goal.x + goal.width &&
                 ball.y + ball.radius > goal.y &&
                 ball.y - ball.radius < goal.y + goal.height
             ) {
-                // Score a point and reset the goal
                 score++;
-                document.getElementById("score").textContent = score;
-
+                document.getElementById('score').textContent = score;
                 goal.x = Math.random() * (canvas.width - 50);
                 goal.y = Math.random() * (canvas.height - 50);
             }
 
-            requestAnimationFrame(gameLoop);
+            // Ball and power-ups
+            powerUps.forEach((p, index) => {
+                const dist = Math.hypot(ball.x - p.x, ball.y - p.y);
+                if (dist < ball.radius + p.radius) {
+                    score += 5;
+                    document.getElementById('score').textContent = score;
+                    powerUps.splice(index, 1); // Remove the collected power-up
+                }
+            });
+
+            // Ball and obstacles
+            obstacles.forEach((o) => {
+                const dist = Math.hypot(ball.x - o.x, ball.y - o.y);
+                if (dist < ball.radius + o.radius) {
+                    score -= 2;
+                    document.getElementById('score').textContent = score;
+                }
+            });
         }
 
-        // Draw the ball
-        function drawBall() {
-            ctx.drawImage(ball.img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
-        }
-
-        // Draw the goal
-        function drawGoal() {
-            ctx.fillStyle = goal.color;
-            ctx.fillRect(goal.x, goal.y, goal.width, goal.height);
-        }
-
-        // Gyroscope controls
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener("deviceorientation", handleOrientation);
-        } else {
-            alert("Gyroscope not supported on this device");
-        }
-
-        function handleOrientation(event) {
-            const { beta, gamma } = event;
-
-            // Adjust the movement speed sensitivity by dividing beta/gamma values
-            ball.dy = beta / 15;
-            ball.dx = gamma / 15;
-        }
-
-        // Floating menu logic
-        const menuButton = document.getElementById("menuButton");
-        const menuBox = document.getElementById("menuBox");
-
-        menuButton.addEventListener("click", () => {
-            menuBox.style.display = menuBox.style.display === "none" ? "block" : "none";
+        // Menu logic
+        const menuLogo = document.getElementById('menuLogo');
+        const menuBox = document.getElementById('menuBox');
+        menuLogo.addEventListener('click', () => {
+            menuBox.style.display = menuBox.style.display === 'none' ? 'block' : 'none';
         });
 
-        // Menu button functions
         function pauseGame() {
             isPaused = !isPaused;
-            if (!isPaused) gameLoop(); // Resume the game
+            if (!isPaused) gameLoop();
         }
 
         function restartGame() {
             ball.x = canvas.width / 2;
             ball.y = canvas.height / 2;
+            ball.dx = 0;
+            ball.dy = 0;
             score = 0;
-            document.getElementById("score").textContent = score;
+            document.getElementById('score').textContent = score;
             isPaused = false;
             gameLoop();
         }
 
         function showInstructions() {
-            alert("Tilt your phone to move the ball and reach the green goal!");
+            alert('Tilt your phone to move the ball. Reach the goal and avoid obstacles!');
         }
 
-        // Start the game loop
+        // Start the game
         gameLoop();
     </script>
 </body>
