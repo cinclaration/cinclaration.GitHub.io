@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Drift</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: black;
+    }
+
+    #menu-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #dropdown-menu {
+      position: absolute;
+      top: 70px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      border: 1px solid #fff;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      z-index: 10;
+    }
+
+    #dropdown-menu button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #dropdown-menu button:hover {
+      background-color: #0056b3;
+    }
+
+    #scoreboard {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 20px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <img id="menu-button" src="https://i.imgur.com/fINCGcJ.png" alt="Menu">
+  <div id="dropdown-menu">
+    <button id="restart-game">Restart Game</button>
+  </div>
+  <div id="scoreboard">
+    <p>Score: <span id="score">0</span></p>
+    <p>Time Left: <span id="timer">30</span></p>
+  </div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const menuButton = document.getElementById('menu-button');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    const restartButton = document.getElementById('restart-game');
+    const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
+
+    // Game Variables
+    let spaceship = { x: 400, y: 300, size: 50, angle: 0 };
+    let backgroundPosition = { x: 0, y: 0 };
+    const playSpace = { width: 1600, height: 1200 }; // Fixed play space size
+    let score = 0;
+    let timer = 30;
+    let goals = [];
+    let obstacles = [];
+    let isPaused = false;
+
+    // Assets
+    const spaceshipImg = new Image();
+    spaceshipImg.src = 'https://i.imgur.com/x87KCsX.png';
+
+    const goalImg = new Image();
+    goalImg.src = 'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png';
+
+    const obstacleImg = new Image();
+    obstacleImg.src = 'https://upload.wikimedia.org/wikipedia/commons/3/39/Asteroid.png';
+
+    const backgroundImg = new Image();
+    backgroundImg.src = 'https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp';
+
+    // Canvas Initialization
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Toggle Dropdown Menu
+    menuButton.addEventListener('click', () => {
+      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Restart Game
+    restartButton.addEventListener('click', () => {
+      resetGame();
+      dropdownMenu.style.display = 'none';
+    });
+
+    // Reset Game
+    function resetGame() {
+      score = 0;
+      timer = 30;
+      goals = [];
+      obstacles = [];
+      spawnEntity(goals, 50, 5); // 5 Goals
+      spawnEntity(obstacles, 50, 5); // 5 Obstacles
+      scoreElement.textContent = score;
+      timerElement.textContent = timer;
+      isPaused = false;
+    }
+
+    // Prevent Overlaps
+    function spawnEntity(entityArray, size, count) {
+      for (let i = 0; i < count; i++) {
+        let entity;
+        do {
+          entity = {
+            x: Math.random() * playSpace.width,
+            y: Math.random() * playSpace.height,
+            size: size,
+          };
+        } while (entityArray.some((e) => isColliding(e, entity)));
+        entityArray.push(entity);
+      }
+    }
+
+    // Collision Detection
+    function isColliding(a, b) {
+      return (
+        a.x < b.x + b.size &&
+        a.x + a.size > b.x &&
+        a.y < b.y + b.size &&
+        a.y + a.size > b.y
+      );
+    }
+
+    // Draw Background
+    function drawBackground() {
+      ctx.drawImage(
+        backgroundImg,
+        backgroundPosition.x,
+        backgroundPosition.y,
+        playSpace.width,
+        playSpace.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    // Draw Entities
+    function drawEntities(entityArray, image) {
+      entityArray.forEach((entity) => {
+        ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
+      });
+    }
+
+    // Draw Spaceship
+    function drawSpaceship() {
+      ctx.save();
+      ctx.translate(spaceship.x, spaceship.y);
+      ctx.rotate(spaceship.angle);
+      ctx.drawImage(spaceshipImg, -spaceship.size / 2, -spaceship.size / 2, spaceship.size, spaceship.size);
+      ctx.restore();
+    }
+
+    // Update Game State
+    function updateGame() {
+      if (timer > 0 && !isPaused) {
+        timer -= 1 / 60;
+        timerElement.textContent = Math.floor(timer);
+      } else if (timer <= 0) {
+        isPaused = true;
+        alert('Game Over! Final Score: ' + score);
+      }
+
+      // Check for Collisions
+      goals.forEach((goal, index) => {
+        if (isColliding(spaceship, goal)) {
+          score += 10;
+          scoreElement.textContent = score;
+          goals.splice(index, 1);
+        }
+      });
+
+      obstacles.forEach((obstacle, index) => {
+        if (isColliding(spaceship, obstacle)) {
+          score -= 5;
+          scoreElement.textContent = score;
+          obstacles.splice(index, 1);
+        }
+      });
+    }
+
+    // Main Game Loop
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!isPaused) {
+        drawBackground();
+        drawEntities(goals, goalImg);
+        drawEntities(obstacles, obstacleImg);
+        drawSpaceship();
+        updateGame();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Initialize Game
+    resetGame();
+    gameLoop();
+  </script>
+</body>
+</html>
