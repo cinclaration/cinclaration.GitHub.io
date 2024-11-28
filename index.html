@@ -98,7 +98,7 @@
             dx: 0,
             dy: 0,
             friction: 0.9,
-            speed: 0.05,
+            speed: 0.2, // Increased for noticeable movement
             img: new Image(),
         };
         ball.img.src = 'https://via.placeholder.com/50/3498DB?text=Ball';
@@ -108,13 +108,14 @@
         const goalImg = new Image();
         goalImg.src = 'https://via.placeholder.com/50/8E44AD?text=Goal';
 
-        // Obstacles
+        // Obstacles and power-ups
         const obstacles = [];
         const powerUps = [];
         let score = 0;
         let level = 1;
         let isPaused = false;
 
+        // Create game elements
         function createGoals() {
             goals.splice(0, goals.length, ...Array.from({ length: level + 2 }, () => ({
                 x: Math.random() * (canvas.width - 50),
@@ -124,39 +125,23 @@
             })));
         }
 
-        function createObstacles() {
-            obstacles.splice(0, obstacles.length, ...Array.from({ length: level + 1 }, () => ({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 20,
-                color: '#E74C3C',
-            })));
-        }
-
-        function createPowerUps() {
-            powerUps.splice(0, powerUps.length, ...Array.from({ length: level }, () => ({
-                x: Math.random() * (canvas.width - 30),
-                y: Math.random() * (canvas.height - 30),
-                radius: 15,
-                color: '#F1C40F',
-            })));
-        }
-
-        function nextLevel() {
-            level++;
-            createGoals();
-            createObstacles();
-            createPowerUps();
+        // Gyroscope controls
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', handleOrientation);
+        } else {
+            alert('Gyroscope not supported on this device');
         }
 
         function handleOrientation(event) {
             if (isPaused) return;
 
-            const { beta, gamma } = event;
-            ball.dx += gamma * ball.speed;
-            ball.dy += beta * ball.speed;
+            const { beta, gamma } = event; // Tilt data
+            console.log(`Gyroscope - Beta: ${beta}, Gamma: ${gamma}`); // Debugging values
+            ball.dx += gamma * ball.speed; // Adjust based on gamma (horizontal tilt)
+            ball.dy += beta * ball.speed;  // Adjust based on beta (vertical tilt)
         }
 
+        // Game loop
         function gameLoop() {
             if (isPaused) return;
 
@@ -166,6 +151,7 @@
             ball.x += ball.dx;
             ball.y += ball.dy;
 
+            // Keep ball within bounds
             if (ball.x < ball.radius) ball.x = ball.radius;
             if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
             if (ball.y < ball.radius) ball.y = ball.radius;
@@ -173,9 +159,6 @@
 
             drawBall();
             drawGoals();
-            drawObstacles();
-            drawPowerUps();
-            checkCollisions();
 
             requestAnimationFrame(gameLoop);
         }
@@ -190,61 +173,7 @@
             });
         }
 
-        function drawObstacles() {
-            obstacles.forEach(obstacle => {
-                ctx.beginPath();
-                ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
-                ctx.fillStyle = obstacle.color;
-                ctx.fill();
-                ctx.closePath();
-            });
-        }
-
-        function drawPowerUps() {
-            powerUps.forEach(powerUp => {
-                ctx.beginPath();
-                ctx.arc(powerUp.x, powerUp.y, powerUp.radius, 0, Math.PI * 2);
-                ctx.fillStyle = powerUp.color;
-                ctx.fill();
-                ctx.closePath();
-            });
-        }
-
-        function checkCollisions() {
-            goals.forEach((goal, index) => {
-                if (
-                    ball.x + ball.radius > goal.x &&
-                    ball.x - ball.radius < goal.x + goal.width &&
-                    ball.y + ball.radius > goal.y &&
-                    ball.y - ball.radius < goal.y + goal.height
-                ) {
-                    score += 10;
-                    document.getElementById('score').textContent = score;
-                    goals.splice(index, 1);
-                    if (goals.length === 0) {
-                        nextLevel();
-                    }
-                }
-            });
-
-            obstacles.forEach(obstacle => {
-                const dist = Math.hypot(ball.x - obstacle.x, ball.y - obstacle.y);
-                if (dist < ball.radius + obstacle.radius) {
-                    score -= 10;
-                    document.getElementById('score').textContent = score;
-                }
-            });
-
-            powerUps.forEach((powerUp, index) => {
-                const dist = Math.hypot(ball.x - powerUp.x, ball.y - powerUp.y);
-                if (dist < ball.radius + powerUp.radius) {
-                    score += 20;
-                    document.getElementById('score').textContent = score;
-                    powerUps.splice(index, 1);
-                }
-            });
-        }
-
+        // Menu controls
         const menuLogo = document.getElementById('menuLogo');
         const menuBox = document.getElementById('menuBox');
         menuLogo.addEventListener('click', () => {
@@ -264,23 +193,16 @@
             score = 0;
             level = 1;
             document.getElementById('score').textContent = score;
-
             createGoals();
-            createObstacles();
-            createPowerUps();
-
             isPaused = false;
             gameLoop();
         }
 
         function showInstructions() {
-            alert('Tilt your phone to move the ball. Collect goals to increase your score and advance to the next level. Avoid obstacles and collect power-ups!');
+            alert('Tilt your phone to move the ball. Reach the goals to increase your score!');
         }
 
         createGoals();
-        createObstacles();
-        createPowerUps();
-
         gameLoop();
     </script>
 </body>
