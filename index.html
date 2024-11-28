@@ -22,6 +22,34 @@
       z-index: 10;
     }
 
+    #dropdown-menu {
+      position: absolute;
+      top: 70px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      border: 1px solid #fff;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      z-index: 10;
+    }
+
+    #dropdown-menu button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #dropdown-menu button:hover {
+      background-color: #0056b3;
+    }
+
     #start-button {
       position: absolute;
       top: 50%;
@@ -54,6 +82,10 @@
 <body>
   <canvas id="gameCanvas"></canvas>
   <img id="menu-button" src="https://i.imgur.com/fINCGcJ.png" alt="Menu">
+  <div id="dropdown-menu">
+    <button id="toggle-controls">Enable Gyroscope</button>
+    <button id="restart-game">Restart Game</button>
+  </div>
   <div id="scoreboard">
     <p>Score: <span id="score">0</span></p>
     <p>Time Left: <span id="timer">30</span></p>
@@ -63,20 +95,24 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menuButton = document.getElementById('menu-button');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    const toggleControlsButton = document.getElementById('toggle-controls');
+    const restartButton = document.getElementById('restart-game');
     const startButton = document.getElementById('start-button');
     const scoreElement = document.getElementById('score');
     const timerElement = document.getElementById('timer');
 
     // Game Variables
-    let spaceship = { x: 100, y: 100, size: 50, angle: 0 };
+    let spaceship = { x: 400, y: 300, size: 50, angle: 0 };
     let backgroundPosition = { x: 0, y: 0 };
-    const playSpace = { width: 2000, height: 2000 }; // Fixed play space size
+    const playSpace = { width: 1600, height: 1200 }; // Fixed play space size
     let score = 0;
     let timer = 30;
     let goals = [];
     let obstacles = [];
     let bonus = [];
     let isPaused = true;
+    let gyroscopeEnabled = false;
 
     // Asset URLs
     const spaceshipImg = new Image();
@@ -103,6 +139,38 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
+    // Toggle Dropdown Menu
+    menuButton.addEventListener('click', () => {
+      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Restart Game
+    restartButton.addEventListener('click', () => {
+      resetGame();
+      dropdownMenu.style.display = 'none';
+    });
+
+    // Toggle Gyroscope
+    toggleControlsButton.addEventListener('click', () => {
+      gyroscopeEnabled = !gyroscopeEnabled;
+      toggleControlsButton.textContent = gyroscopeEnabled ? 'Disable Gyroscope' : 'Enable Gyroscope';
+      dropdownMenu.style.display = 'none';
+    });
+
+    // Reset Game
+    function resetGame() {
+      score = 0;
+      timer = 30;
+      goals = [];
+      obstacles = [];
+      bonus = [];
+      spawnEntity(goals, 50, 5);
+      spawnEntity(obstacles, 50, 5);
+      spawnEntity(bonus, 70, 1);
+      scoreElement.textContent = score;
+      timerElement.textContent = timer;
+    }
+
     // Prevent Overlaps
     function spawnEntity(entityArray, size, count) {
       for (let i = 0; i < count; i++) {
@@ -118,6 +186,7 @@
       }
     }
 
+    // Collision Detection
     function isColliding(a, b) {
       return (
         a.x < b.x + b.size &&
@@ -127,6 +196,14 @@
       );
     }
 
+    // Draw Entities
+    function drawEntities(entityArray, image) {
+      entityArray.forEach((entity) => {
+        ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
+      });
+    }
+
+    // Draw Background
     function drawBackground() {
       ctx.drawImage(
         backgroundImg,
@@ -141,35 +218,7 @@
       );
     }
 
-    function drawEntities(entityArray, image) {
-      entityArray.forEach((entity) => {
-        ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
-      });
-    }
-
-    function drawSpaceship() {
-      ctx.save();
-      ctx.translate(spaceship.x, spaceship.y);
-      ctx.rotate(spaceship.angle);
-      ctx.drawImage(spaceshipImg, -spaceship.size / 2, -spaceship.size / 2, spaceship.size, spaceship.size);
-      ctx.restore();
-    }
-
-    function updateBackground() {
-      backgroundPosition.x = -spaceship.x + canvas.width / 2;
-      backgroundPosition.y = -spaceship.y + canvas.height / 2;
-
-      // Clamp to play space boundaries
-      backgroundPosition.x = Math.max(
-        Math.min(backgroundPosition.x, 0),
-        canvas.width - playSpace.width
-      );
-      backgroundPosition.y = Math.max(
-        Math.min(backgroundPosition.y, 0),
-        canvas.height - playSpace.height
-      );
-    }
-
+    // Update Game State
     function updateGame() {
       if (timer > 0 && !isPaused) {
         timer -= 1 / 60;
@@ -178,39 +227,12 @@
         isPaused = true;
         alert('Game Over! Final Score: ' + score);
       }
-
-      goals.forEach((goal, index) => {
-        if (isColliding(spaceship, goal)) {
-          score += 10;
-          scoreElement.textContent = score;
-          goals.splice(index, 1);
-        }
-      });
-
-      obstacles.forEach((obstacle, index) => {
-        if (isColliding(spaceship, obstacle)) {
-          score -= 5;
-          scoreElement.textContent = score;
-          obstacles.splice(index, 1);
-        }
-      });
-
-      bonus.forEach((b, index) => {
-        if (isColliding(spaceship, b)) {
-          score += 50;
-          scoreElement.textContent = score;
-          bonus.splice(index, 1);
-        }
-      });
-
-      updateBackground();
     }
 
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!isPaused) {
         drawBackground();
-        drawSpaceship();
         drawEntities(goals, goalImg);
         drawEntities(obstacles, obstacleImg);
         drawEntities(bonus, bonusImg);
@@ -225,9 +247,7 @@
       startButton.style.display = 'none';
     });
 
-    spawnEntity(goals, 50, 5);
-    spawnEntity(obstacles, 50, 5);
-    spawnEntity(bonus, 70, 1);
+    resetGame();
     gameLoop();
   </script>
 </body>
