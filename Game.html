@@ -83,7 +83,7 @@
 
     // Game Variables
     let spaceship = { x: 400, y: 300, size: 50, angle: 0, speedX: 0, speedY: 0 };
-    const playSpace = { width: 1600, height: 1200 };
+    const playArea = { width: 1600, height: 1200 };
     let score = 0;
     let timer = 30;
     let goals = [];
@@ -155,8 +155,8 @@
         let entity;
         do {
           entity = {
-            x: Math.random() * playSpace.width,
-            y: Math.random() * playSpace.height,
+            x: Math.random() * playArea.width,
+            y: Math.random() * playArea.height,
             size: size,
           };
         } while (entityArray.some(e => isColliding(e, entity)));
@@ -176,7 +176,7 @@
 
     // Draw Background
     function drawBackground() {
-      ctx.drawImage(backgroundImg, 0, 0, playSpace.width, playSpace.height, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(backgroundImg, 0, 0, playArea.width, playArea.height, 0, 0, canvas.width, canvas.height);
     }
 
     // Draw Entities
@@ -224,7 +224,6 @@
 
       // Update Spaceship Position
       if (gyroscopeEnabled) {
-        // Gyroscope Movement (dummy logic)
         spaceship.x += spaceship.speedX;
         spaceship.y += spaceship.speedY;
       }
