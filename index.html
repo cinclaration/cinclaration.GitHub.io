@@ -56,14 +56,17 @@ HTML & CSS (Section)
             position: absolute;
             top: 10px;
             right: 10px;
-            background: orange;
+            background: none;
             border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
+            border-radius: 50%;
+            padding: 10px;
             cursor: pointer;
-            font-size: 16px;
-            color: white;
             z-index: 2;
+        }
+        .menu-button img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
         }
     </style>
 </head>
@@ -72,10 +75,11 @@ HTML & CSS (Section)
     <canvas id="gameCanvas"></canvas>
     <div class="scoreboard">Score: <span id="score">0</span></div>
     <div class="scoreboard" style="top: 50px;">Time Left: <span id="timer">30 seconds</span></div>
-    <button class="menu-button" id="menuButton">Menu</button>
+    <button class="menu-button" id="menuButton">
+        <img src="https://i.imgur.com/fINCGcJ.png" alt="Menu Logo">
+    </button>
 </body>
 </html>
-
 
 /* --------------------------------
 
@@ -97,11 +101,16 @@ Begin Java (Section 2)
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas(); // Set initial size
 
-    // Parallax Background
-    let backgroundOffset = 0;
+    // Background Initialization
+    const background = document.querySelector('.background-layer');
+    let backgroundOffsetX = 0;
+    let backgroundOffsetY = 0;
+
+    // Parallax Scrolling Function
     function updateBackground() {
-        backgroundOffset += 1; // Adjust speed
-        document.querySelector('.background-layer').style.backgroundPosition = `${backgroundOffset}px ${backgroundOffset}px`;
+        backgroundOffsetX += 1;
+        backgroundOffsetY += 1;
+        background.style.backgroundPosition = `${-backgroundOffsetX}px ${-backgroundOffsetY}px`;
     }
 
     // UI Updates
@@ -132,19 +141,7 @@ Begin Java (Section 2)
         score = 0;
         updateUI();
     }
-
-    // Start Game Loop
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-        updateBackground(); // Update background
-        requestAnimationFrame(gameLoop); // Loop
-    }
-
-    // Start everything
-    startTimer();
-    gameLoop();
 </script>
-
 
 
 /* --------------------------------
@@ -164,15 +161,28 @@ Java (Section 3)
         dy: 0,
         friction: 0.9,
         speed: 0.15,
+        img: new Image(),
     };
+    spaceship.img.src = 'https://i.imgur.com/x87KCsX.png'; // Spaceship image
 
     // Draw Spaceship
     function drawSpaceship() {
-        ctx.beginPath();
-        ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#3498DB'; // Blue
-        ctx.fill();
-        ctx.closePath();
+        if (spaceship.img.complete) {
+            ctx.drawImage(
+                spaceship.img,
+                spaceship.x - spaceship.radius,
+                spaceship.y - spaceship.radius,
+                spaceship.radius * 2,
+                spaceship.radius * 2
+            );
+        } else {
+            // Fallback to circle if image doesn't load
+            ctx.beginPath();
+            ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#3498DB'; // Blue color
+            ctx.fill();
+            ctx.closePath();
+        }
     }
 
     // Update Spaceship Position
@@ -195,18 +205,7 @@ Java (Section 3)
         spaceship.dx += gamma * spaceship.speed;
         spaceship.dy += beta * spaceship.speed;
     });
-
-    // Update Game Loop
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-        updateBackground(); // Update background
-        updateSpaceship(); // Update spaceship
-        requestAnimationFrame(gameLoop); // Loop
-    }
-
-    gameLoop(); // Start the game loop
 </script>
-
 
 
 
@@ -221,138 +220,37 @@ Java (Section 4)
 
 
 <script>
-    // Arrays for Game Objects
-    const goals = []; // Collectible goals
-    const obstacles = []; // Obstacles to avoid
-    const powerUps = []; // Power-ups for bonuses
+    const goals = []; // Goals Array
 
-    // Images for Objects
+    // Planet Image for Goals
     const goalImg = new Image();
-    goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg'; // Replace with your planet image
+    goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg'; // Planet image
 
-    const obstacleImg = new Image();
-    obstacleImg.src = 'https://via.placeholder.com/50/E74C3C?text=Obstacle'; // Placeholder for obstacles
-
-    const powerUpImg = new Image();
-    powerUpImg.src = 'https://i.imgur.com/fINCGcJ.png'; // Replace with your power-up image
-
-    // Function to Create Goals
+    // Generate Goals
     function createGoals() {
-        goals.splice(0, goals.length); // Clear existing goals
-        for (let i = 0; i < 5; i++) { // Spawn 5 goals
-            let x, y;
-            do {
-                x = Math.random() * (canvas.width - 50) + 25;
-                y = Math.random() * (canvas.height - 50) + 25;
-            } while (goals.some(g => Math.hypot(g.x - x, g.y - y) < 50)); // Avoid overlap
-            goals.push({ x, y, width: 30, height: 30 });
-        }
-    }
-
-    // Function to Create Obstacles
-    function createObstacles() {
-        obstacles.splice(0, obstacles.length); // Clear existing obstacles
-        for (let i = 0; i < 3; i++) { // Spawn 3 obstacles
-            let x, y;
-            do {
-                x = Math.random() * (canvas.width - 50) + 25;
-                y = Math.random() * (canvas.height - 50) + 25;
-            } while (
-                obstacles.some(o => Math.hypot(o.x - x, o.y - y) < 50) ||
-                goals.some(g => Math.hypot(g.x - x, g.y - y) < 50)
-            ); // Avoid overlap with goals
-            obstacles.push({ x, y, radius: 20 });
-        }
-    }
-
-    // Function to Create Power-Ups
-    function createPowerUps() {
-        powerUps.splice(0, powerUps.length); // Clear existing power-ups
-        for (let i = 0; i < 2; i++) { // Spawn 2 power-ups
-            let x, y;
-            do {
-                x = Math.random() * (canvas.width - 50) + 25;
-                y = Math.random() * (canvas.height - 50) + 25;
-            } while (
-                powerUps.some(p => Math.hypot(p.x - x, p.y - y) < 50) ||
-                goals.some(g => Math.hypot(g.x - x, g.y - y) < 50) ||
-                obstacles.some(o => Math.hypot(o.x - x, o.y - y) < 50)
-            ); // Avoid overlap
-            powerUps.push({ x, y, radius: 15 });
+        for (let i = 0; i < 5; i++) {
+            const x = Math.random() * (canvas.width - 30) + 15;
+            const y = Math.random() * (canvas.height - 30) + 15;
+            goals.push({ x, y });
         }
     }
 
     // Draw Goals
     function drawGoals() {
         goals.forEach(goal => {
-            ctx.drawImage(goalImg, goal.x, goal.y, goal.width, goal.height);
+            ctx.drawImage(goalImg, goal.x - 15, goal.y - 15, 30, 30);
         });
     }
 
-    // Draw Obstacles
-    function drawObstacles() {
-        obstacles.forEach(obstacle => {
-            ctx.beginPath();
-            ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#E74C3C'; // Red color
-            ctx.fill();
-            ctx.closePath();
-        });
-    }
-
-    // Draw Power-Ups
-    function drawPowerUps() {
-        powerUps.forEach(powerUp => {
-            ctx.drawImage(powerUpImg, powerUp.x - 15, powerUp.y - 15, 30, 30);
-        });
-    }
-
-    // Collision Detection
+    // Collision Detection for Goals
     function checkCollisions() {
-        // Check collisions with goals
         goals.forEach((goal, index) => {
-            if (Math.hypot(spaceship.x - (goal.x + 15), spaceship.y - (goal.y + 15)) < spaceship.radius + 15) {
-                score += 10; // Increase score
-                goals.splice(index, 1); // Remove goal
-            }
-        });
-
-        // Check collisions with obstacles
-        obstacles.forEach(obstacle => {
-            if (Math.hypot(spaceship.x - obstacle.x, spaceship.y - obstacle.y) < spaceship.radius + obstacle.radius) {
-                score -= 10; // Deduct points
-            }
-        });
-
-        // Check collisions with power-ups
-        powerUps.forEach((powerUp, index) => {
-            if (Math.hypot(spaceship.x - powerUp.x, spaceship.y - powerUp.y) < spaceship.radius + powerUp.radius) {
-                score += 20; // Add bonus points
-                powerUps.splice(index, 1); // Remove power-up
+            if (Math.hypot(spaceship.x - goal.x, spaceship.y - goal.y) < spaceship.radius + 15) {
+                score += 10;
+                goals.splice(index, 1);
             }
         });
     }
-
-    // Integrate Objects into Game Loop
-    function gameLoop() {
-        if (!isPaused) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            updateBackground(); // Update the parallax background
-            updateSpaceship(); // Update spaceship movement
-            drawGoals(); // Draw goals
-            drawObstacles(); // Draw obstacles
-            drawPowerUps(); // Draw power-ups
-            checkCollisions(); // Check for collisions
-            drawUI(); // Draw the UI
-        }
-        requestAnimationFrame(gameLoop); // Keep looping
-    }
-
-    // Initialize Game Objects
-    createGoals();
-    createObstacles();
-    createPowerUps();
-    gameLoop(); // Start the game loop
 </script>
 
 
@@ -463,120 +361,24 @@ Java (Section 6)
 */
 
 <script>
-    const particles = []; // Array to store particle effects
-
-    // Create Particles for Effects
-    function createParticles(x, y, color) {
-        for (let i = 0; i < 10; i++) {
-            particles.push({
-                x: x,
-                y: y,
-                dx: (Math.random() - 0.5) * 4, // Random x-direction velocity
-                dy: (Math.random() - 0.5) * 4, // Random y-direction velocity
-                radius: Math.random() * 4 + 2, // Random radius between 2 and 6
-                color: color, // Particle color
-                life: 30, // Particle lifespan in frames
-            });
-        }
-    }
-
-    // Update and Render Particles
-    function updateParticles() {
-        for (let i = particles.length - 1; i >= 0; i--) {
-            const p = particles[i];
-            p.x += p.dx; // Update position
-            p.y += p.dy;
-            p.life--; // Reduce lifespan
-
-            if (p.life <= 0) {
-                particles.splice(i, 1); // Remove particle when it expires
-            } else {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                ctx.closePath();
-            }
-        }
-    }
-
-    // Modify Collision Handling to Include Particle Effects
-    function checkCollisions() {
-        // Collisions with goals
-        goals.forEach((goal, index) => {
-            if (Math.hypot(spaceship.x - (goal.x + 15), spaceship.y - (goal.y + 15)) < spaceship.radius + 15) {
-                score += 10; // Increase score
-                createParticles(goal.x + 15, goal.y + 15, "#8E44AD"); // Purple particles for goals
-                goals.splice(index, 1); // Remove goal
-            }
-        });
-
-        // Collisions with obstacles
-        obstacles.forEach(obstacle => {
-            if (Math.hypot(spaceship.x - obstacle.x, spaceship.y - obstacle.y) < spaceship.radius + obstacle.radius) {
-                score -= 10; // Deduct points
-                createParticles(obstacle.x, obstacle.y, "#E74C3C"); // Red particles for obstacles
-            }
-        });
-
-        // Collisions with power-ups
-        powerUps.forEach((powerUp, index) => {
-            if (Math.hypot(spaceship.x - powerUp.x, spaceship.y - powerUp.y) < spaceship.radius + powerUp.radius) {
-                score += 20; // Add bonus points
-                createParticles(powerUp.x, powerUp.y, "#F1C40F"); // Yellow particles for power-ups
-                powerUps.splice(index, 1); // Remove power-up
-            }
-        });
-    }
-
-    // Add Fade Transitions for Level Changes
-    let fadeOpacity = 0;
-    let fadingIn = true;
-
-    function drawFadeEffect() {
-        if (fadingIn && fadeOpacity < 1) {
-            fadeOpacity += 0.02; // Fade in
-        } else if (!fadingIn && fadeOpacity > 0) {
-            fadeOpacity -= 0.02; // Fade out
-        }
-
-        if (fadeOpacity > 0) {
-            ctx.fillStyle = `rgba(0, 0, 0, ${fadeOpacity})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-
-    function startFadeIn() {
-        fadingIn = true;
-        fadeOpacity = 0;
-    }
-
-    function startFadeOut() {
-        fadingIn = false;
-        fadeOpacity = 1;
-    }
-
-    // Update the Game Loop for Enhancements
+    // Main Game Loop
     function gameLoop() {
         if (!isPaused) {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-            updateBackground(); // Update parallax background
-            updateSpaceship(); // Update spaceship movement
+            updateBackground(); // Update background
+            updateSpaceship(); // Update spaceship
             drawGoals(); // Draw goals
-            drawObstacles(); // Draw obstacles
-            drawPowerUps(); // Draw power-ups
-            updateParticles(); // Update particles
             checkCollisions(); // Handle collisions
-            drawFadeEffect(); // Add fade effects
-            drawUI(); // Draw the UI elements
+            drawUI(); // Draw UI elements
         }
-        requestAnimationFrame(gameLoop); // Continue the loop
+        requestAnimationFrame(gameLoop); // Loop
     }
 
-    // Restart the Game Loop with Enhancements
-    restartGame();
+    // Start the Game
+    createGoals();
+    startTimer();
+    gameLoop();
 </script>
-
 
 
 
