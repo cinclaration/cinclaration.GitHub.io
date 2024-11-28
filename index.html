@@ -1,12 +1,3 @@
-
-/* --------------------------------
-
-HTML & CSS (Section)
-
------------------------------------
-*/
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +5,7 @@ HTML & CSS (Section)
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Drift</title>
     <style>
+        /*-------------- CSS/Section 1: Global Styling ---------------*/
         body, html {
             margin: 0;
             padding: 0;
@@ -29,7 +21,7 @@ HTML & CSS (Section)
             height: 100%;
             background-image: url('https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp');
             background-size: cover;
-            background-repeat: repeat;
+            background-repeat: no-repeat;
             z-index: -1;
         }
 
@@ -58,14 +50,12 @@ HTML & CSS (Section)
             right: 10px;
             background: none;
             border: none;
-            border-radius: 50%;
-            padding: 10px;
             cursor: pointer;
             z-index: 2;
         }
         .menu-button img {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
         }
     </style>
@@ -79,316 +69,149 @@ HTML & CSS (Section)
         <img src="https://i.imgur.com/fINCGcJ.png" alt="Menu Logo">
     </button>
 </body>
-</html>
 
-/* --------------------------------
+/*-------------- JavaScript/Section 2: Canvas Initialization ---------------*/
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-Begin Java (Section 2)
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.querySelector('.background-layer').style.width = `${canvas.width}px`;
+    document.querySelector('.background-layer').style.height = `${canvas.height}px`;
+}
 
------------------------------------
-*/
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); // Initial call
 
-<script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+/*-------------- JavaScript/Section 3: Background Setup ---------------*/
+const background = document.querySelector('.background-layer');
+let backgroundOffsetX = 0;
+let backgroundOffsetY = 0;
 
-    // Resize canvas dynamically
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
+function updateBackground() {
+    backgroundOffsetX += 1;
+    backgroundOffsetY += 1;
+    background.style.backgroundPosition = `${-backgroundOffsetX}px ${-backgroundOffsetY}px`;
+}
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas(); // Set initial size
+/*-------------- JavaScript/Section 4: UI Updates (Score and Timer) ---------------*/
+let timeLeft = 30;
+let score = 0;
 
-    // Background Initialization
-    const background = document.querySelector('.background-layer');
-    let backgroundOffsetX = 0;
-    let backgroundOffsetY = 0;
+function updateUI() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('timer').textContent = `${timeLeft} seconds`;
+}
 
-    // Parallax Scrolling Function
-    function updateBackground() {
-        backgroundOffsetX += 1;
-        backgroundOffsetY += 1;
-        background.style.backgroundPosition = `${-backgroundOffsetX}px ${-backgroundOffsetY}px`;
-    }
-
-    // UI Updates
-    function updateUI() {
-        document.getElementById('score').textContent = score;
-        document.getElementById('timer').textContent = `${timeLeft} seconds`;
-    }
-
-    // Timer
-    let timeLeft = 30;
-    let score = 0;
-
-    function startTimer() {
-        setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateUI();
-            } else {
-                alert('Game Over! Try Again.');
-                resetGame();
-            }
-        }, 1000);
-    }
-
-    // Reset Game
-    function resetGame() {
-        timeLeft = 30;
-        score = 0;
-        updateUI();
-    }
-</script>
-
-
-/* --------------------------------
-
-Java (Section 3)
-
------------------------------------
-*/
-
-<script>
-    // Spaceship Variables
-    const spaceship = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        radius: 20,
-        dx: 0,
-        dy: 0,
-        friction: 0.9,
-        speed: 0.15,
-        img: new Image(),
-    };
-    spaceship.img.src = 'https://i.imgur.com/x87KCsX.png'; // Spaceship image
-
-    // Draw Spaceship
-    function drawSpaceship() {
-        if (spaceship.img.complete) {
-            ctx.drawImage(
-                spaceship.img,
-                spaceship.x - spaceship.radius,
-                spaceship.y - spaceship.radius,
-                spaceship.radius * 2,
-                spaceship.radius * 2
-            );
+function startTimer() {
+    setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updateUI();
         } else {
-            // Fallback to circle if image doesn't load
-            ctx.beginPath();
-            ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#3498DB'; // Blue color
-            ctx.fill();
-            ctx.closePath();
+            alert('Game Over! Try Again.');
+            resetGame();
         }
+    }, 1000);
+}
+
+function resetGame() {
+    timeLeft = 30;
+    score = 0;
+    updateUI();
+}
+
+
+/*-------------- JavaScript/Section 5: Spaceship and Controls ---------------*/
+const spaceship = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 20,
+    dx: 0,
+    dy: 0,
+    friction: 0.9,
+    speed: 0.15,
+    img: new Image(),
+};
+spaceship.img.src = 'https://i.imgur.com/x87KCsX.png';
+
+function drawSpaceship() {
+    if (spaceship.img.complete) {
+        ctx.drawImage(
+            spaceship.img,
+            spaceship.x - spaceship.radius,
+            spaceship.y - spaceship.radius,
+            spaceship.radius * 2,
+            spaceship.radius * 2
+        );
+    } else {
+        ctx.beginPath();
+        ctx.arc(spaceship.x, spaceship.y, spaceship.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#3498DB';
+        ctx.fill();
+        ctx.closePath();
     }
+}
 
-    // Update Spaceship Position
-    function updateSpaceship() {
-        spaceship.dx *= spaceship.friction;
-        spaceship.dy *= spaceship.friction;
-        spaceship.x += spaceship.dx;
-        spaceship.y += spaceship.dy;
+function updateSpaceship() {
+    spaceship.dx *= spaceship.friction;
+    spaceship.dy *= spaceship.friction;
+    spaceship.x += spaceship.dx;
+    spaceship.y += spaceship.dy;
 
-        // Keep within bounds
-        spaceship.x = Math.max(spaceship.radius, Math.min(canvas.width - spaceship.radius, spaceship.x));
-        spaceship.y = Math.max(spaceship.radius, Math.min(canvas.height - spaceship.radius, spaceship.y));
+    spaceship.x = Math.max(spaceship.radius, Math.min(canvas.width - spaceship.radius, spaceship.x));
+    spaceship.y = Math.max(spaceship.radius, Math.min(canvas.height - spaceship.radius, spaceship.y));
 
-        drawSpaceship();
+    drawSpaceship();
+}
+
+window.addEventListener('deviceorientation', (event) => {
+    const { beta, gamma } = event;
+    spaceship.dx += gamma * spaceship.speed;
+    spaceship.dy += beta * spaceship.speed;
+});
+
+/*-------------- JavaScript/Section 6: Goals and Collision Detection ---------------*/
+const goals = [];
+const goalImg = new Image();
+goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg';
+
+function createGoals() {
+    for (let i = 0; i < 5; i++) {
+        const x = Math.random() * (canvas.width - 30) + 15;
+        const y = Math.random() * (canvas.height - 30) + 15;
+        goals.push({ x, y });
     }
+}
 
-    // Gyroscope Controls
-    window.addEventListener('deviceorientation', (event) => {
-        const { beta, gamma } = event;
-        spaceship.dx += gamma * spaceship.speed;
-        spaceship.dy += beta * spaceship.speed;
+function drawGoals() {
+    goals.forEach(goal => {
+        ctx.drawImage(goalImg, goal.x - 15, goal.y - 15, 30, 30);
     });
-</script>
+}
 
-
-
-
-
-/* --------------------------------
-
-Java (Section 4)
-
------------------------------------
-*/
-
-
-<script>
-    const goals = []; // Goals Array
-
-    // Planet Image for Goals
-    const goalImg = new Image();
-    goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg'; // Planet image
-
-    // Generate Goals
-    function createGoals() {
-        for (let i = 0; i < 5; i++) {
-            const x = Math.random() * (canvas.width - 30) + 15;
-            const y = Math.random() * (canvas.height - 30) + 15;
-            goals.push({ x, y });
+function checkCollisions() {
+    goals.forEach((goal, index) => {
+        if (Math.hypot(spaceship.x - goal.x, spaceship.y - goal.y) < spaceship.radius + 15) {
+            score += 10;
+            goals.splice(index, 1);
         }
-    }
+    });
+}
 
-    // Draw Goals
-    function drawGoals() {
-        goals.forEach(goal => {
-            ctx.drawImage(goalImg, goal.x - 15, goal.y - 15, 30, 30);
-        });
-    }
+/*-------------- JavaScript/Section 7: Game Loop ---------------*/
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updateBackground();
+    updateSpaceship();
+    drawGoals();
+    checkCollisions();
+    updateUI();
+    requestAnimationFrame(gameLoop);
+}
 
-    // Collision Detection for Goals
-    function checkCollisions() {
-        goals.forEach((goal, index) => {
-            if (Math.hypot(spaceship.x - goal.x, spaceship.y - goal.y) < spaceship.radius + 15) {
-                score += 10;
-                goals.splice(index, 1);
-            }
-        });
-    }
-</script>
+createGoals();
+startTimer();
+gameLoop();
 
-
-
-
-
-
-/* --------------------------------
-
-Java (Section 5)
-
------------------------------------
-*/
-
-<script>
-    // Level Variables
-    let level = 1; // Start at level 1
-    let timeLeft = 30; // Time for the current level in seconds
-    let timerInterval; // Timer interval reference
-
-    // Display Timer
-    function updateTimerDisplay() {
-        const timerElement = document.getElementById("timer");
-        if (!timerElement) {
-            const newTimer = document.createElement("div");
-            newTimer.id = "timer";
-            newTimer.style.position = "absolute";
-            newTimer.style.top = "50px";
-            newTimer.style.left = "50%";
-            newTimer.style.transform = "translateX(-50%)";
-            newTimer.style.color = "white";
-            newTimer.style.fontSize = "24px";
-            newTimer.style.fontWeight = "bold";
-            newTimer.style.zIndex = "1";
-            document.body.appendChild(newTimer);
-        }
-        document.getElementById("timer").textContent = `Time Left: ${timeLeft} seconds`;
-    }
-
-    // Start Timer
-    function startTimer() {
-        timeLeft = 30 + level * 5; // Add more time with each level
-        updateTimerDisplay(); // Show initial time
-
-        timerInterval = setInterval(() => {
-            if (!isPaused) {
-                timeLeft--;
-                updateTimerDisplay();
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval); // Stop the timer
-                    endLevel(); // Move to the next level
-                }
-            }
-        }, 1000); // Update every second
-    }
-
-    // End Level
-    function endLevel() {
-        isPaused = true; // Pause the game
-        clearInterval(timerInterval); // Stop the timer
-        alert(`Level ${level} Complete! Get ready for Level ${level + 1}.`);
-        nextLevel(); // Start the next level
-    }
-
-    // Move to the Next Level
-    function nextLevel() {
-        level++; // Increment the level
-        timeLeft = 30 + level * 5; // Add more time for the next level
-        spaceship.speed += 0.05; // Slightly increase gyroscopic sensitivity
-        createGoals(); // Create new goals
-        createObstacles(); // Create new obstacles
-        createPowerUps(); // Create new power-ups
-        isPaused = false; // Resume the game
-        startTimer(); // Restart the timer
-    }
-
-    // Restart Game
-    function restartGame() {
-        level = 1; // Reset to level 1
-        score = 0; // Reset score
-        timeLeft = 30; // Reset timer
-        spaceship.speed = 0.15; // Reset spaceship speed
-        createGoals(); // Create initial goals
-        createObstacles(); // Create initial obstacles
-        createPowerUps(); // Create initial power-ups
-        document.getElementById("score").textContent = score; // Reset score display
-        isPaused = false; // Resume the game
-        startTimer(); // Restart the timer
-        gameLoop(); // Restart the game loop
-    }
-
-    // Initialize the Game with Timer and Levels
-    restartGame();
-</script>
-
-
-
-
-
-
-
-/* --------------------------------
-
-Java (Section 6)
-
------------------------------------
-*/
-
-<script>
-    // Main Game Loop
-    function gameLoop() {
-        if (!isPaused) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
-            updateBackground(); // Update background
-            updateSpaceship(); // Update spaceship
-            drawGoals(); // Draw goals
-            checkCollisions(); // Handle collisions
-            drawUI(); // Draw UI elements
-        }
-        requestAnimationFrame(gameLoop); // Loop
-    }
-
-    // Start the Game
-    createGoals();
-    startTimer();
-    gameLoop();
-</script>
-
-
-
-
-
-
-
-/* --------------------------------
-
-Java (additive 1)
-
------------------------------------
-*/
