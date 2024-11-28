@@ -76,14 +76,13 @@
 <body>
     <div class="scoreboard">Score: <span id="score">0</span></div>
     <img src="https://via.placeholder.com/50/FF5733?text=Menu" class="menu-logo" id="menuLogo" alt="Menu Logo">
-    <div class="menu-box" id="menuBox">
+    <div id="menuBox" class="menu-box">
         <button onclick="pauseGame()">Pause Game</button>
         <button onclick="restartGame()">Restart Game</button>
         <button onclick="showInstructions()">Instructions</button>
     </div>
     <canvas id="gameCanvas"></canvas>
-
-    <script>
+<script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -102,12 +101,12 @@
             speed: 0.05,
             img: new Image(),
         };
-        ball.img.src = 'https://via.placeholder.com/50/3498DB?text=BallTexture';
+        ball.img.src = 'https://via.placeholder.com/50/3498DB?text=Ball';
 
         // Goals
         const goals = [];
         const goalImg = new Image();
-        goalImg.src = 'https://via.placeholder.com/50/8E44AD?text=GoalTexture';
+        goalImg.src = 'https://via.placeholder.com/50/8E44AD?text=Goal';
 
         // Obstacles
         const obstacles = [];
@@ -150,13 +149,6 @@
             createPowerUps();
         }
 
-        // Gyroscope controls
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', handleOrientation);
-        } else {
-            alert('Gyroscope not supported on this device');
-        }
-
         function handleOrientation(event) {
             if (isPaused) return;
 
@@ -165,52 +157,39 @@
             ball.dy += beta * ball.speed;
         }
 
-        // Game loop
         function gameLoop() {
             if (isPaused) return;
 
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Apply friction
             ball.dx *= ball.friction;
             ball.dy *= ball.friction;
-
-            // Update ball position
             ball.x += ball.dx;
             ball.y += ball.dy;
 
-            // Keep the ball within canvas bounds
             if (ball.x < ball.radius) ball.x = ball.radius;
             if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
             if (ball.y < ball.radius) ball.y = ball.radius;
             if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
 
-            // Draw elements
             drawBall();
             drawGoals();
             drawObstacles();
             drawPowerUps();
-
-            // Check collisions
             checkCollisions();
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Draw ball
         function drawBall() {
             ctx.drawImage(ball.img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
         }
 
-        // Draw goals
         function drawGoals() {
             goals.forEach(goal => {
                 ctx.drawImage(goalImg, goal.x, goal.y, goal.width, goal.height);
             });
         }
 
-        // Draw obstacles
         function drawObstacles() {
             obstacles.forEach(obstacle => {
                 ctx.beginPath();
@@ -221,7 +200,6 @@
             });
         }
 
-        // Draw power-ups
         function drawPowerUps() {
             powerUps.forEach(powerUp => {
                 ctx.beginPath();
@@ -232,9 +210,7 @@
             });
         }
 
-        // Check collisions
         function checkCollisions() {
-            // Ball and goals
             goals.forEach((goal, index) => {
                 if (
                     ball.x + ball.radius > goal.x &&
@@ -244,15 +220,13 @@
                 ) {
                     score += 10;
                     document.getElementById('score').textContent = score;
-                    goals.splice(index, 1); // Remove the collected goal
-
+                    goals.splice(index, 1);
                     if (goals.length === 0) {
-                        nextLevel(); // Advance to next level when all goals are collected
+                        nextLevel();
                     }
                 }
             });
 
-            // Ball and obstacles
             obstacles.forEach(obstacle => {
                 const dist = Math.hypot(ball.x - obstacle.x, ball.y - obstacle.y);
                 if (dist < ball.radius + obstacle.radius) {
@@ -261,21 +235,19 @@
                 }
             });
 
-            // Ball and power-ups
             powerUps.forEach((powerUp, index) => {
                 const dist = Math.hypot(ball.x - powerUp.x, ball.y - powerUp.y);
                 if (dist < ball.radius + powerUp.radius) {
                     score += 20;
                     document.getElementById('score').textContent = score;
-                    powerUps.splice(index, 1); // Remove the collected power-up
+                    powerUps.splice(index, 1);
                 }
             });
         }
 
-        // Menu logic
         const menuLogo = document.getElementById('menuLogo');
-        const menuBox = document.getElementById('menuBox);
-menuLogo.addEventListener('click', () => {
+        const menuBox = document.getElementById('menuBox');
+        menuLogo.addEventListener('click', () => {
             menuBox.style.display = menuBox.style.display === 'none' ? 'block' : 'none';
         });
 
@@ -293,7 +265,6 @@ menuLogo.addEventListener('click', () => {
             level = 1;
             document.getElementById('score').textContent = score;
 
-            // Reset all elements
             createGoals();
             createObstacles();
             createPowerUps();
@@ -303,15 +274,13 @@ menuLogo.addEventListener('click', () => {
         }
 
         function showInstructions() {
-            alert('Tilt your phone to move the ball. Collect goals to increase your score and advance to the next level. Avoid obstacles (lose 10 points) and collect power-ups (gain 20 points) for bonuses!');
+            alert('Tilt your phone to move the ball. Collect goals to increase your score and advance to the next level. Avoid obstacles and collect power-ups!');
         }
 
-        // Initialize game elements
         createGoals();
         createObstacles();
         createPowerUps();
 
-        // Start the game
         gameLoop();
     </script>
 </body>
