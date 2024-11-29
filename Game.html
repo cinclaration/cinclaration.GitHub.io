@@ -1,225 +1,217 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ripple World Builder</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-      font-family: Arial, sans-serif;
-    }
+<style>
+  /* Menu Styling */
+  #menu {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 200px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    cursor: grab;
+  }
 
-    canvas {
-      display: block;
-    }
-  </style>
-</head>
-<body>
-  <canvas id="gameCanvas"></canvas>
-  <script>
-    // Canvas Setup
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+  #menu h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+  }
 
-    // Resize Canvas
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+  #menu button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    font-size: 14px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  #menu button:hover {
+    background: #0056b3;
+  }
+</style>
+
+<div id="menu">
+  <h3>Simulation Menu</h3>
+  <button id="resetBtn">Reset Simulation</button>
+  <button id="toggleGravityBtn">Toggle Gravity</button>
+  <button id="spawnParticlesBtn">Spawn Particles</button>
+</div>
+
+
+
+
+
+<script>
+  // Menu Dragging Logic
+  const menu = document.getElementById("menu");
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  menu.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    offsetX = e.clientX - menu.offsetLeft;
+    offsetY = e.clientY - menu.offsetTop;
+    menu.style.cursor = "grabbing";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      menu.style.left = `${e.clientX - offsetX}px`;
+      menu.style.top = `${e.clientY - offsetY}px`;
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    menu.style.cursor = "grab";
+  });
+
+  // Menu Buttons Logic
+  document.getElementById("resetBtn").addEventListener("click", resetSimulation);
+  document.getElementById("toggleGravityBtn").addEventListener("click", toggleGravity);
+  document.getElementById("spawnParticlesBtn").addEventListener("click", spawnParticles);
+</script>
+
+
+
+
+<script>
+  const particles = [];
+  let gravityEnabled = false;
+
+  // Create Particles on Touch
+  function createParticle(x, y) {
+    particles.push({
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      size: Math.random() * 5 + 5,
+      color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
+      alpha: 1,
     });
+  }
 
-    const ripples = []; // Store ripples
-    const plants = []; // Store plants
-    const waterPatches = []; // Store water ripples
-    const particles = []; // Store glowing particles
-    const maxRippleRadius = Math.min(canvas.width, canvas.height) / 6; // Constrain ripple size
+  // Draw Particles
+  function drawParticles() {
+    particles.forEach((particle, index) => {
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fillStyle = particle.color.replace(/[\d.]+\)$/g, `${particle.alpha})`);
+      ctx.fill();
+      ctx.closePath();
 
-    // Create Ripple
-    function createRipple(x, y) {
-      ripples.push({
-        x,
-        y,
-        radius: 0,
-        maxRadius: maxRippleRadius,
-        growthSpeed: 6,
-        color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
-        alpha: 0.7,
-      });
+      // Update Particle Position
+      particle.x += particle.vx;
+      particle.y += particle.vy;
 
-      // Randomly decide what the ripple creates
-      const creationType = Math.random();
-      if (creationType < 0.4) {
-        spawnPlant(x, y); // 40% chance to grow a plant
-      } else if (creationType < 0.7) {
-        spawnWaterPatch(x, y); // 30% chance to expand water
-      } else {
-        spawnParticle(x, y); // 30% chance to spawn glowing particles
+      // Apply Gravity if Enabled
+      if (gravityEnabled) particle.vy += 0.1;
+
+      // Fade Out and Remove Particle
+      particle.alpha -= 0.01;
+      if (particle.alpha <= 0) particles.splice(index, 1);
+    });
+  }
+</script>
+
+
+
+
+
+<script>
+  // Physics: Collision Detection
+  function handleParticleCollisions() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const p1 = particles[i];
+        const p2 = particles[j];
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < p1.size + p2.size) {
+          // Bounce Particles
+          const angle = Math.atan2(dy, dx);
+          const speed1 = Math.sqrt(p1.vx * p1.vx + p1.vy * p1.vy);
+          const speed2 = Math.sqrt(p2.vx * p2.vx + p2.vy * p2.vy);
+
+          p1.vx = speed2 * Math.cos(angle);
+          p1.vy = speed2 * Math.sin(angle);
+          p2.vx = speed1 * Math.cos(angle + Math.PI);
+          p2.vy = speed1 * Math.sin(angle + Math.PI);
+
+          // Chemistry: Change Color on Collision
+          p1.color = `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
+          p2.color = `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
+        }
       }
     }
+  }
 
-    // Draw Ripples
-    function drawRipples() {
-      ripples.forEach((ripple, index) => {
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = ripple.color;
-        ctx.lineWidth = 2;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = ripple.color;
-        ctx.stroke();
-        ctx.closePath();
+  // Reset Simulation
+  function resetSimulation() {
+    particles.length = 0; // Clear all particles
+  }
 
-        ripple.radius += ripple.growthSpeed; // Expand ripple
-        ripple.alpha -= 0.01; // Fade ripple
-        ripple.color = ripple.color.replace(/[\d.]+\)$/g, `${ripple.alpha})`);
+  // Toggle Gravity
+  function toggleGravity() {
+    gravityEnabled = !gravityEnabled;
+  }
 
-        if (ripple.radius >= ripple.maxRadius || ripple.alpha <= 0) {
-          ripples.splice(index, 1); // Remove ripple when fully expanded or invisible
-        }
-      });
+  // Spawn Random Particles
+  function spawnParticles() {
+    for (let i = 0; i < 20; i++) {
+      createParticle(Math.random() * canvas.width, Math.random() * canvas.height);
     }
+  }
+</script>
 
-    // Plant Creation
-    function spawnPlant(x, y) {
-      plants.push({
-        x,
-        y,
-        size: 5,
-        growthSpeed: 0.5,
-        maxSize: Math.random() * 15 + 10,
-        color: 'green',
-      });
-    }
 
-    function drawPlants() {
-      plants.forEach((plant, index) => {
-        ctx.beginPath();
-        ctx.arc(plant.x, plant.y, plant.size, 0, Math.PI * 2);
-        ctx.fillStyle = plant.color;
-        ctx.fill();
-        ctx.closePath();
 
-        // Grow the plant
-        if (plant.size < plant.maxSize) {
-          plant.size += plant.growthSpeed;
-        }
-      });
-    }
+<script>
+  // Main Animation Loop
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Water Ripple Creation
-    function spawnWaterPatch(x, y) {
-      waterPatches.push({
-        x,
-        y,
-        radius: 0,
-        maxRadius: Math.random() * 50 + 30,
-        color: 'rgba(0, 150, 255, 0.5)',
-        growthSpeed: 2,
-      });
-    }
+    drawParticles(); // Draw particles
+    handleParticleCollisions(); // Handle physics interactions
 
-    function drawWaterPatches() {
-      waterPatches.forEach((patch, index) => {
-        ctx.beginPath();
-        ctx.arc(patch.x, patch.y, patch.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = patch.color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.closePath();
+    requestAnimationFrame(animate);
+  }
 
-        patch.radius += patch.growthSpeed;
+  // Event Listeners for Touch and Mouse
+  canvas.addEventListener("mousedown", (e) => {
+    createParticle(e.clientX, e.clientY);
+  });
 
-        if (patch.radius >= patch.maxRadius) {
-          waterPatches.splice(index, 1); // Remove patch when fully expanded
-        }
-      });
-    }
+  canvas.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    createParticle(touch.clientX, touch.clientY);
+  });
 
-    // Particle Creation
-    function spawnParticle(x, y) {
-      particles.push({
-        x,
-        y,
-        size: Math.random() * 5 + 2,
-        alpha: 1,
-        fadeSpeed: 0.02,
-        color: `hsla(${Math.random() * 360}, 80%, 70%, 1)`,
-      });
-    }
+  canvas.addEventListener("mousemove", (e) => {
+    if (e.buttons === 1) createParticle(e.clientX, e.clientY);
+  });
 
-    function drawParticles() {
-      particles.forEach((particle, index) => {
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = particle.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = particle.color;
-        ctx.fill();
-        ctx.closePath();
+  canvas.addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    createParticle(touch.clientX, touch.clientY);
+  });
 
-        // Fade particle
-        particle.alpha -= particle.fadeSpeed;
-        particle.color = particle.color.replace(/[\d.]+\)$/g, `${particle.alpha})`);
+  // Start the Simulation
+  animate();
+</script>
 
-        if (particle.alpha <= 0) {
-          particles.splice(index, 1); // Remove faded particle
-        }
-      });
-    }
 
-    // Mouse and Touch Interactions
-    let isTouching = false;
 
-    canvas.addEventListener('mousedown', (e) => {
-      isTouching = true;
-      const rect = canvas.getBoundingClientRect();
-      createRipple(e.clientX - rect.left, e.clientY - rect.top);
-    });
 
-    canvas.addEventListener('mousemove', (e) => {
-      if (isTouching) {
-        const rect = canvas.getBoundingClientRect();
-        createRipple(e.clientX - rect.left, e.clientY - rect.top);
-      }
-    });
 
-    canvas.addEventListener('mouseup', () => (isTouching = false));
-
-    canvas.addEventListener('touchstart', (e) => {
-      isTouching = true;
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      createRipple(touch.clientX - rect.left, touch.clientY - rect.top);
-    });
-
-    canvas.addEventListener('touchmove', (e) => {
-      if (isTouching) {
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        createRipple(touch.clientX - rect.left, touch.clientY - rect.top);
-      }
-    });
-
-    canvas.addEventListener('touchend', () => (isTouching = false));
-
-    // Main Animation Loop
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      drawRipples(); // Draw ripples
-      drawPlants(); // Draw plants
-      drawWaterPatches(); // Draw water patches
-      drawParticles(); // Draw glowing particles
-
-      requestAnimationFrame(animate);
-    }
-
-    // Start the Game
-    animate();
-  </script>
-</body>
-</html> 
