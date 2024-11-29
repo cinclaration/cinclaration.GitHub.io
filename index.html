@@ -3,145 +3,256 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tree-Like Fractal Flow Toy</title>
+  <title>My Website</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
-    body {
+    /* General Styles */
+    body, html {
       margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    #controls {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
+      padding: 0;
+      box-sizing: border-box;
       font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
     }
 
-    #startButton {
-      padding: 10px 20px;
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      background: #000;
+      padding: 1rem 2rem;
+      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    header .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    header nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header .nav-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    header .nav-links a {
+      padding: 0.5rem 1rem;
+      background: #333;
+      border-radius: 5px;
+      transition: background 0.3s ease, transform 0.2s;
+      font-size: 1rem;
+    }
+
+    header .nav-links a:hover {
       background: #007bff;
+      transform: scale(1.05);
+    }
+
+    /* Hero Section */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100vh;
+      background: linear-gradient(to bottom, #000, #007bff);
+      animation: fadeIn 1s ease-out;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .hero .cta-button {
+      padding: 1rem 2rem;
+      margin: 0.5rem;
+      font-size: 1rem;
       color: white;
+      background: #007bff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      font-size: 16px;
+      transition: background 0.3s ease, transform 0.2s;
     }
 
-    #startButton:hover {
+    .hero .cta-button:hover {
       background: #0056b3;
+      transform: scale(1.05);
+    }
+
+    /* Highlights Section */
+    .highlights {
+      padding: 3rem 2rem;
+      background: #121212;
+      text-align: center;
+    }
+
+    .highlights h2 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .highlight-item {
+      background: #333;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .highlight-item:hover {
+      transform: translateY(-5px);
+      background: #007bff;
+    }
+
+    .highlight-item h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .highlight-item p {
+      margin-bottom: 1.5rem;
+      color: #ccc;
+    }
+
+    .cta-link {
+      padding: 0.5rem 1rem;
+      background: #121212;
+      color: #007bff;
+      border: 1px solid #007bff;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .cta-link:hover {
+      background: #007bff;
+      color: white;
+    }
+
+    /* Footer */
+    footer {
+      background: #000;
+      color: white;
+      text-align: center;
+      padding: 1.5rem 1rem;
+    }
+
+    footer .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    footer .social-links a {
+      color: #007bff;
+      transition: color 0.3s ease;
+    }
+
+    footer .social-links a:hover {
+      color: #0056b3;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="controls">
-    <button id="startButton">Start Tree Fractal</button>
-  </div>
-  <canvas id="canvas"></canvas>
-  <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const startButton = document.getElementById("startButton");
+  <!-- Header -->
+  <header>
+    <nav>
+      <a href="index.html" class="logo">My Website</a>
+      <ul class="nav-links">
+        <li><a href="Game.html">Play the Game</a></li>
+        <li><a href="flowToy.html">Flow Toy</a></li>
+        <li><a href="store.html">Store</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About Us</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Welcome to My Website</h1>
+    <p>Explore, play, shop, and connect. The universe is in your hands!</p>
+    <a href="Game.html" class="cta-button">Play the Game</a>
+    <a href="flowToy.html" class="cta-button">Explore Flow Toy</a>
+  </section>
 
-    const trees = [];
-    let gyroscope = { beta: 0, gamma: 0 };
+  <!-- Highlights Section -->
+  <section class="highlights">
+    <h2>Explore Our Features</h2>
+    <div class="highlights-grid">
+      <div class="highlight-item">
+        <h3>Play the Game</h3>
+        <p>Immerse yourself in an interactive gaming experience. Challenge yourself!</p>
+        <a href="Game.html" class="cta-link">Play Now</a>
+      </div>
 
-    // Adjust canvas size on resize
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
+      <div class="highlight-item">
+        <h3>Flow Toy</h3>
+        <p>Interact with a sound-reactive, gyroscopic flow tool and discover its beauty.</p>
+        <a href="flowToy.html" class="cta-link">Explore</a>
+      </div>
 
-    // Tree Fractal Class
-    class Tree {
-      constructor(x, y, size, depth) {
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.depth = depth;
-        this.angle = Math.PI / 2; // Initial angle (upward)
-        this.color = `hsl(${Math.random() * 360}, 70%, 70%)`;
-      }
+      <div class="highlight-item">
+        <h3>Shop Our Store</h3>
+        <p>Discover unique products and exclusive items. Shop now for amazing deals!</p>
+        <a href="store.html" class="cta-link">Visit Store</a>
+      </div>
+    </div>
+  </section>
 
-      draw(ctx, x, y, size, depth, angle) {
-        if (depth === 0) return;
-
-        const newX = x + Math.cos(angle) * size;
-        const newY = y - Math.sin(angle) * size;
-
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = depth;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(newX, newY);
-        ctx.stroke();
-
-        // Recursive branching
-        const newSize = size * 0.7;
-        const angleVariation = Math.PI / 6; // Branching angle
-        this.draw(ctx, newX, newY, newSize, depth - 1, angle + angleVariation); // Right branch
-        this.draw(ctx, newX, newY, newSize, depth - 1, angle - angleVariation); // Left branch
-      }
-
-      update() {
-        // Morph angle with gyroscope
-        this.angle += (gyroscope.gamma / 100) * 0.1;
-        this.y += gyroscope.beta * 0.1; // Move tree with tilt
-        this.y = Math.max(0, Math.min(canvas.height, this.y)); // Stay within bounds
-      }
-
-      render(ctx) {
-        this.update();
-        this.draw(ctx, this.x, this.y, this.size, this.depth, this.angle);
-      }
-    }
-
-    // Generate Trees
-    function generateTrees() {
-      trees.length = 0;
-      for (let i = 0; i < 3; i++) {
-        const x = Math.random() * canvas.width;
-        const y = canvas.height - 50;
-        const size = Math.random() * 50 + 50;
-        const depth = Math.floor(Math.random() * 4) + 4;
-        trees.push(new Tree(x, y, size, depth));
-      }
-    }
-
-    // Gyroscope Input
-    window.addEventListener("deviceorientation", (event) => {
-      gyroscope.beta = event.beta || 0; // Forward-back tilt
-      gyroscope.gamma = event.gamma || 0; // Left-right tilt
-    });
-
-    // Animation Loop
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      trees.forEach((tree) => {
-        tree.render(ctx);
-      });
-
-      requestAnimationFrame(animate);
-    }
-
-    // Start Button Listener
-    startButton.addEventListener("click", () => {
-      startButton.style.display = "none"; // Hide button
-      generateTrees();
-      animate();
-    });
-  </script>
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2024 My Website. All rights reserved.</p>
+    <div class="social-links">
+      <a href="https://twitter.com" target="_blank">Twitter</a>
+      <a href="https://facebook.com" target="_blank">Facebook</a>
+      <a href="https://instagram.com" target="_blank">Instagram</a>
+    </div>
+  </footer>
 </body>
 </html>
