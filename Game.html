@@ -1,4 +1,4 @@
-<!-- SECTION 1: HTML STRUCTURE AND BASIC SETUP -->
+<!-- SECTION 1: HTML STRUCTURE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,7 +74,8 @@
   </div>
 
 
-<!-- SECTION 2: JAVASCRIPT SETUP AND INITIAL VARIABLES -->
+
+<!-- SECTION 2: JAVASCRIPT SETUP AND GAME VARIABLES -->
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -100,7 +101,7 @@
     spaceshipImg.src = 'https://i.imgur.com/x87KCsX.png';
 
     const goalImg = new Image();
-    goalImg.src = 'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png';
+    goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg';
 
     const obstacleImg = new Image();
     obstacleImg.src = 'https://upload.wikimedia.org/wikipedia/commons/3/39/Asteroid.png';
@@ -223,7 +224,7 @@
       ctx.restore();
     }
 
-    // Update Game
+    // Update Game State
     function updateGame() {
       if (timer > 0 && !isPaused) {
         timer -= 1 / 60;
@@ -282,7 +283,7 @@
     // Gyroscope Controls
     window.addEventListener('deviceorientation', (event) => {
       if (gyroscopeEnabled && !isPaused) {
-        const sensitivity = 0.2; // Adjust this value for gyroscope sensitivity
+        const sensitivity = 0.2; // Adjust for gyroscope sensitivity
         spaceship.speedX = event.gamma * sensitivity; // Tilt left/right
         spaceship.speedY = event.beta * sensitivity; // Tilt forward/backward
 
@@ -297,6 +298,7 @@
   </script>
 
 
+
 <!-- SECTION 6: GAME INITIALIZATION AND EXECUTION -->
   <script>
     // Initialize Game
@@ -307,3 +309,5 @@
   </script>
 </body>
 </html>
+
+
