@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sound Reactive Flow Toy</title>
+  <title>Enhanced Flow Toy</title>
   <style>
     body {
       margin: 0;
@@ -56,7 +56,7 @@
 
     let audioContext, analyser, microphone;
     let gyroscope = { beta: 0, gamma: 0 };
-    let flowToyElements = [];
+    const ribbons = [];
 
     // Resize Canvas
     window.addEventListener('resize', () => {
@@ -64,7 +64,7 @@
       canvas.height = window.innerHeight;
     });
 
-    // Sound and Gyroscope Initialization
+    // Initialize Audio and Gyroscope
     async function initialize() {
       // Initialize Audio Context
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -76,7 +76,7 @@
       microphone = audioContext.createMediaStreamSource(stream);
       microphone.connect(analyser);
 
-      // Initialize Gyroscope Listener
+      // Gyroscope Initialization
       window.addEventListener('deviceorientation', (event) => {
         gyroscope.beta = event.beta || 0; // Forward-Back Tilt
         gyroscope.gamma = event.gamma || 0; // Left-Right Tilt
@@ -86,56 +86,65 @@
       startAnimation();
     }
 
-    // Flow Toy Element Class
-    class FlowToyElement {
+    // Ribbon Class
+    class Ribbon {
       constructor(x, y) {
+        this.points = [];
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.maxPoints = 30;
         this.x = x;
         this.y = y;
-        this.angle = 0;
-        this.size = Math.random() * 20 + 10;
-        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.speedX = 0;
+        this.speedY = 0;
+        this.size = Math.random() * 10 + 5;
       }
 
       update(audioData) {
-        const intensity = audioData / 255; // Normalize amplitude
-        this.angle += intensity * 0.1; // Adjust based on sound intensity
-        this.x += Math.sin(this.angle + gyroscope.gamma / 20) * 2;
-        this.y += Math.cos(this.angle + gyroscope.beta / 20) * 2;
+        const intensity = audioData / 255; // Normalize audio data
+        this.speedX += (gyroscope.gamma / 50) * intensity;
+        this.speedY += (gyroscope.beta / 50) * intensity;
 
-        // Bounce off walls
-        if (this.x < 0 || this.x > canvas.width) this.angle += Math.PI / 2;
-        if (this.y < 0 || this.y > canvas.height) this.angle += Math.PI / 2;
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        // Boundaries
+        this.x = Math.max(0, Math.min(canvas.width, this.x));
+        this.y = Math.max(0, Math.min(canvas.height, this.y));
+
+        // Add new point
+        this.points.push({ x: this.x, y: this.y });
+        if (this.points.length > this.maxPoints) {
+          this.points.shift(); // Remove oldest point
+        }
       }
 
       draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.moveTo(this.points[0]?.x, this.points[0]?.y);
+        for (let i = 1; i < this.points.length; i++) {
+          const point = this.points[i];
+          ctx.lineTo(point.x, point.y);
+        }
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.size;
+        ctx.lineJoin = 'round';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.color;
         ctx.stroke();
-        ctx.restore();
       }
     }
 
-    // Generate Flow Toy Elements
-    function generateFlowToyElements() {
-      flowToyElements = [];
-      for (let i = 0; i < 50; i++) {
-        flowToyElements.push(
-          new FlowToyElement(
-            Math.random() * canvas.width,
-            Math.random() * canvas.height
-          )
-        );
+    // Generate Ribbons
+    function generateRibbons() {
+      ribbons.length = 0;
+      for (let i = 0; i < 5; i++) {
+        ribbons.push(new Ribbon(canvas.width / 2, canvas.height / 2));
       }
     }
 
     // Animation Loop
     function startAnimation() {
-      generateFlowToyElements();
+      generateRibbons();
 
       function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -144,11 +153,11 @@
         const audioData = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(audioData);
 
-        // Update and Draw Elements
-        flowToyElements.forEach((element, index) => {
+        // Update and Draw Ribbons
+        ribbons.forEach((ribbon, index) => {
           const audioValue = audioData[index % audioData.length];
-          element.update(audioValue);
-          element.draw();
+          ribbon.update(audioValue);
+          ribbon.draw();
         });
 
         requestAnimationFrame(animate);
@@ -165,4 +174,3 @@
   </script>
 </body>
 </html>
-
