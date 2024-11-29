@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fractal Flow Toy</title>
+  <title>Tree-Like Fractal Flow Toy</title>
   <style>
     body {
       margin: 0;
@@ -43,137 +43,103 @@
 </head>
 <body>
   <div id="controls">
-    <button id="startButton">Start Fractal Toy</button>
+    <button id="startButton">Start Tree Fractal</button>
   </div>
   <canvas id="canvas"></canvas>
   <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const startButton = document.getElementById("startButton");
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const fractals = [];
-
+    const trees = [];
     let gyroscope = { beta: 0, gamma: 0 };
 
-    window.addEventListener('resize', () => {
+    // Adjust canvas size on resize
+    window.addEventListener("resize", () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
 
-    // Fractal Class
-    class Fractal {
-      constructor(x, y, size, depth, shape = 'triangle') {
+    // Tree Fractal Class
+    class Tree {
+      constructor(x, y, size, depth) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.depth = depth;
-        this.shape = shape;
+        this.angle = Math.PI / 2; // Initial angle (upward)
         this.color = `hsl(${Math.random() * 360}, 70%, 70%)`;
-        this.rotation = Math.random() * Math.PI * 2;
       }
 
-      draw(ctx, depth = this.depth) {
+      draw(ctx, x, y, size, depth, angle) {
         if (depth === 0) return;
 
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
+        const newX = x + Math.cos(angle) * size;
+        const newY = y - Math.sin(angle) * size;
+
         ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
-
-        if (this.shape === 'triangle') {
-          this.drawTriangle(ctx, this.size);
-        } else if (this.shape === 'square') {
-          this.drawSquare(ctx, this.size);
-        }
-
-        ctx.restore();
-
-        // Recursive Draw
-        const newSize = this.size * 0.5;
-        const offsets = [
-          { dx: -newSize, dy: -newSize },
-          { dx: newSize, dy: -newSize },
-          { dx: -newSize, dy: newSize },
-          { dx: newSize, dy: newSize },
-        ];
-
-        offsets.forEach((offset) => {
-          const newX = this.x + offset.dx;
-          const newY = this.y + offset.dy;
-          const child = new Fractal(newX, newY, newSize, depth - 1, this.shape);
-          child.rotation = this.rotation + 0.2; // Morph rotation
-          child.color = this.color;
-          child.draw(ctx, depth - 1);
-        });
-      }
-
-      drawTriangle(ctx, size) {
+        ctx.lineWidth = depth;
         ctx.beginPath();
-        ctx.moveTo(0, -size);
-        ctx.lineTo(size, size);
-        ctx.lineTo(-size, size);
-        ctx.closePath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(newX, newY);
         ctx.stroke();
+
+        // Recursive branching
+        const newSize = size * 0.7;
+        const angleVariation = Math.PI / 6; // Branching angle
+        this.draw(ctx, newX, newY, newSize, depth - 1, angle + angleVariation); // Right branch
+        this.draw(ctx, newX, newY, newSize, depth - 1, angle - angleVariation); // Left branch
       }
 
-      drawSquare(ctx, size) {
-        ctx.beginPath();
-        ctx.rect(-size / 2, -size / 2, size, size);
-        ctx.stroke();
+      update() {
+        // Morph angle with gyroscope
+        this.angle += (gyroscope.gamma / 100) * 0.1;
+        this.y += gyroscope.beta * 0.1; // Move tree with tilt
+        this.y = Math.max(0, Math.min(canvas.height, this.y)); // Stay within bounds
       }
 
-      morphShape() {
-        this.shape = this.shape === 'triangle' ? 'square' : 'triangle';
+      render(ctx) {
+        this.update();
+        this.draw(ctx, this.x, this.y, this.size, this.depth, this.angle);
       }
     }
 
-    // Generate Initial Fractals
-    function generateFractals() {
-      fractals.length = 0;
+    // Generate Trees
+    function generateTrees() {
+      trees.length = 0;
       for (let i = 0; i < 3; i++) {
         const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
+        const y = canvas.height - 50;
         const size = Math.random() * 50 + 50;
-        const depth = Math.floor(Math.random() * 3) + 2;
-        const shape = Math.random() > 0.5 ? 'triangle' : 'square';
-        fractals.push(new Fractal(x, y, size, depth, shape));
+        const depth = Math.floor(Math.random() * 4) + 4;
+        trees.push(new Tree(x, y, size, depth));
       }
     }
 
     // Gyroscope Input
-    window.addEventListener('deviceorientation', (event) => {
-      gyroscope.beta = event.beta || 0;
-      gyroscope.gamma = event.gamma || 0;
+    window.addEventListener("deviceorientation", (event) => {
+      gyroscope.beta = event.beta || 0; // Forward-back tilt
+      gyroscope.gamma = event.gamma || 0; // Left-right tilt
     });
 
     // Animation Loop
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      fractals.forEach((fractal, index) => {
-        fractal.x += gyroscope.gamma * 0.1; // Apply gyroscope motion
-        fractal.y += gyroscope.beta * 0.1;
-
-        fractal.rotation += 0.01; // Rotate continuously
-        fractal.draw(ctx);
-
-        // Randomly Morph Shape
-        if (Math.random() < 0.005) {
-          fractal.morphShape();
-        }
+      trees.forEach((tree) => {
+        tree.render(ctx);
       });
 
       requestAnimationFrame(animate);
     }
 
     // Start Button Listener
-    startButton.addEventListener('click', () => {
-      startButton.style.display = 'none'; // Hide button
-      generateFractals();
+    startButton.addEventListener("click", () => {
+      startButton.style.display = "none"; // Hide button
+      generateTrees();
       animate();
     });
   </script>
