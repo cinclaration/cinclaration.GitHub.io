@@ -3,107 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Drift Game</title>
+  <title>Gravity Drift</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
       background-color: black;
+      color: white;
     }
 
-    #menu-button {
+    #gameCanvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #ui {
       position: absolute;
       top: 10px;
       left: 10px;
-      width: 50px;
-      height: 50px;
-      cursor: pointer;
       z-index: 10;
     }
 
-    #dropdown-menu {
-      position: absolute;
-      top: 70px;
-      left: 10px;
-      background-color: rgba(0, 0, 0, 0.8);
-      color: white;
-      border: 1px solid #fff;
-      padding: 10px;
-      border-radius: 5px;
-      display: none;
-      z-index: 10;
-    }
-
-    #dropdown-menu button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 10px;
+    .ui-element {
       margin: 5px 0;
-      width: 100%;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    #dropdown-menu button:hover {
-      background-color: #0056b3;
-    }
-
-    #scoreboard {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: white;
-      font-size: 20px;
-      z-index: 10;
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <img id="menu-button" src="https://i.imgur.com/fINCGcJ.png" alt="Menu">
-  <div id="dropdown-menu">
-    <button id="toggle-controls">Switch to Gyroscope</button>
-    <button id="restart-game">Restart Game</button>
+  <div id="ui">
+    <div class="ui-element">Score: <span id="score">0</span></div>
+    <div class="ui-element">Fuel: <span id="fuel">100</span></div>
   </div>
-  <div id="scoreboard">
-    <p>Score: <span id="score">0</span></p>
-    <p>Time Left: <span id="timer">30</span></p>
-  </div>
+
+
 
 <script>
+    // Canvas and Context
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const menuButton = document.getElementById('menu-button');
-    const dropdownMenu = document.getElementById('dropdown-menu');
-    const toggleControlsButton = document.getElementById('toggle-controls');
-    const restartButton = document.getElementById('restart-game');
+
+    // UI Elements
     const scoreElement = document.getElementById('score');
-    const timerElement = document.getElementById('timer');
+    const fuelElement = document.getElementById('fuel');
 
     // Game Variables
-    let spaceship = { x: 400, y: 300, size: 50, angle: 0, speedX: 0, speedY: 0 };
-    const playArea = { width: canvas.width, height: canvas.height };
     let score = 0;
-    let timer = 30;
-    let goals = [];
-    let obstacles = [];
-    let isPaused = false;
-    let gyroscopeEnabled = false;
-
-    // Game Assets
-    const spaceshipImg = new Image();
-    spaceshipImg.src = 'https://i.imgur.com/x87KCsX.png';
-
-    const goalImg = new Image();
-    goalImg.src = 'https://i.imgur.com/Xqmv2mE.jpeg';
-
-    const obstacleImg = new Image();
-    obstacleImg.src = 'https://upload.wikimedia.org/wikipedia/commons/3/39/Asteroid.png';
-
-    const backgroundImg = new Image();
-    backgroundImg.src = 'https://i.ibb.co/WGmkpNJ/file-Dkh-Jnzq1p6x-MPVGqah-KM3-F-1.webp';
+    let fuel = 100;
+    const gravitySources = []; // Array to store gravitational objects
+    let spaceship;
 
     // Initialize Canvas Size
     function resizeCanvas() {
@@ -114,28 +65,104 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Dropdown Menu Toggle
-    menuButton.addEventListener('click', () => {
-      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
-    });
-  </script>
+    // Spaceship Object
+    spaceship = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      size: 20,
+      velocityX: 0,
+      velocityY: 0,
+      thrust: 0.05, // Thrust power
+      angle: 0, // Current angle of the spaceship
+      rotateSpeed: 0.05, // Rotation speed
+      isThrusting: false, // Whether the ship is applying thrust
+    };
 
-<script>
-    // Draw Background
-    function drawBackground() {
-      ctx.drawImage(
-        backgroundImg,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+    // Add a gravity source
+    function addGravitySource(x, y, mass) {
+      gravitySources.push({ x, y, mass });
     }
 
-    // Draw Entities
-    function drawEntities(entityArray, image) {
-      entityArray.forEach(entity => {
-        ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
+    // Add Example Gravity Sources
+    addGravitySource(canvas.width / 4, canvas.height / 2, 5000); // Example planet
+    addGravitySource((canvas.width * 3) / 4, canvas.height / 2, 5000); // Another planet
+  </script>
+
+
+
+<script>
+    // Calculate Distance Between Two Points
+    function distance(x1, y1, x2, y2) {
+      return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    }
+
+    // Apply Gravity to the Spaceship
+    function applyGravity() {
+      gravitySources.forEach(source => {
+        const dist = distance(spaceship.x, spaceship.y, source.x, source.y);
+        const force = source.mass / dist ** 2; // Gravitational force (inverse square law)
+
+        // Direction of gravity
+        const directionX = (source.x - spaceship.x) / dist;
+        const directionY = (source.y - spaceship.y) / dist;
+
+        // Apply force to velocity
+        spaceship.velocityX += directionX * force;
+        spaceship.velocityY += directionY * force;
+      });
+    }
+
+    // Spaceship Movement Controls
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') spaceship.isThrusting = true;
+      if (e.key === 'ArrowLeft') spaceship.angle -= spaceship.rotateSpeed;
+      if (e.key === 'ArrowRight') spaceship.angle += spaceship.rotateSpeed;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowUp') spaceship.isThrusting = false;
+    });
+
+    // Apply Thrust
+    function applyThrust() {
+      if (spaceship.isThrusting && fuel > 0) {
+        // Calculate thrust force based on the ship's angle
+        const thrustX = Math.cos(spaceship.angle) * spaceship.thrust;
+        const thrustY = Math.sin(spaceship.angle) * spaceship.thrust;
+
+        // Apply thrust to velocity
+        spaceship.velocityX += thrustX;
+        spaceship.velocityY += thrustY;
+
+        // Decrease fuel
+        fuel -= 0.1;
+        fuelElement.textContent = Math.max(0, Math.floor(fuel));
+      }
+    }
+
+    // Update Spaceship Position
+    function updateSpaceship() {
+      spaceship.x += spaceship.velocityX;
+      spaceship.y += spaceship.velocityY;
+
+      // Keep spaceship within the canvas
+      if (spaceship.x < 0) spaceship.x = canvas.width;
+      if (spaceship.x > canvas.width) spaceship.x = 0;
+      if (spaceship.y < 0) spaceship.y = canvas.height;
+      if (spaceship.y > canvas.height) spaceship.y = 0;
+    }
+  </script>
+
+
+<script>
+    // Draw Gravity Sources (Planets)
+    function drawGravitySources() {
+      gravitySources.forEach(source => {
+        ctx.beginPath();
+        ctx.arc(source.x, source.y, 20, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.7)';
+        ctx.fill();
+        ctx.closePath();
       });
     }
 
@@ -144,87 +171,53 @@
       ctx.save();
       ctx.translate(spaceship.x, spaceship.y);
       ctx.rotate(spaceship.angle);
-      ctx.drawImage(
-        spaceshipImg,
-        -spaceship.size / 2,
-        -spaceship.size / 2,
-        spaceship.size,
-        spaceship.size
-      );
+
+      // Draw spaceship as a triangle
+      ctx.beginPath();
+      ctx.moveTo(-spaceship.size, spaceship.size);
+      ctx.lineTo(spaceship.size, 0);
+      ctx.lineTo(-spaceship.size, -spaceship.size);
+      ctx.closePath();
+
+      ctx.fillStyle = 'white';
+      ctx.fill();
       ctx.restore();
     }
-  </script>
 
-<script>
-    // Update Game State
+    // Update and Draw Everything
     function updateGame() {
-      if (timer > 0 && !isPaused) {
-        timer -= 1 / 60;
-        timerElement.textContent = Math.floor(timer);
-      } else if (timer <= 0) {
-        isPaused = true;
-        alert('Game Over! Final Score: ' + score);
-      }
-
-      // Collision Detection
-      goals.forEach((goal, index) => {
-        if (isColliding(spaceship, goal)) {
-          score += 10;
-          scoreElement.textContent = score;
-          goals.splice(index, 1);
-        }
-      });
-
-      obstacles.forEach((obstacle, index) => {
-        if (isColliding(spaceship, obstacle)) {
-          score -= 5;
-          scoreElement.textContent = score;
-          obstacles.splice(index, 1);
-        }
-      });
-    }
-
-    // Game Loop
-    function gameLoop() {
+      // Clear Canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (!isPaused) {
-        drawBackground(); // Static background
-        drawEntities(goals, goalImg);
-        drawEntities(obstacles, obstacleImg);
-        drawSpaceship();
-        updateGame();
+      // Apply Gravity and Update Spaceship
+      applyGravity();
+      applyThrust();
+      updateSpaceship();
+
+      // Draw Game Elements
+      drawGravitySources();
+      drawSpaceship();
+
+      // Update Score
+      score += 0.1; // Increment score gradually
+      scoreElement.textContent = Math.floor(score);
+
+      // End Game if Out of Fuel
+      if (fuel <= 0) {
+        alert('Game Over! Your score: ' + Math.floor(score));
+        resetGame();
       }
 
-      requestAnimationFrame(gameLoop);
-    }
-  </script>
-
-
-
-<script>
-    // Reset Game
-    function resetGame() {
-      score = 0;
-      timer = 30;
-      goals = [];
-      obstacles = [];
-      spaceship.x = canvas.width / 2;
-      spaceship.y = canvas.height / 2;
-      spawnEntities(goals, 5, 50);
-      spawnEntities(obstacles, 5, 50);
-      scoreElement.textContent = score;
-      timerElement.textContent = timer;
-      isPaused = false;
+      requestAnimationFrame(updateGame);
     }
 
-    // Start Game
+    // Initialize and Start Game
     function initializeGame() {
       resetGame();
-      gameLoop();
+      updateGame();
     }
 
-    // Run Game
+    // Start Game When Window Loads
     window.onload = () => {
       initializeGame();
     };
@@ -232,3 +225,168 @@
 </body>
 </html>
 
+<script>
+    const obstacles = []; // Array to store obstacles
+    const refuelPods = []; // Array to store refueling pods
+
+    // Add Obstacles
+    function addObstacle(x, y) {
+      obstacles.push({ x, y, size: 20 });
+    }
+
+    // Add Refueling Pods
+    function addRefuelPod(x, y) {
+      refuelPods.push({ x, y, size: 10 });
+    }
+
+    // Spawn Obstacles and Refueling Pods
+    function spawnEntities() {
+      // Add Obstacles
+      for (let i = 0; i < 5; i++) {
+        addObstacle(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height
+        );
+      }
+
+      // Add Refueling Pods
+      for (let i = 0; i < 3; i++) {
+        addRefuelPod(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height
+        );
+      }
+    }
+
+    // Draw Obstacles
+    function drawObstacles() {
+      obstacles.forEach(obstacle => {
+        ctx.beginPath();
+        ctx.arc(obstacle.x, obstacle.y, obstacle.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+      });
+    }
+
+    // Draw Refueling Pods
+    function drawRefuelPods() {
+      refuelPods.forEach(pod => {
+        ctx.beginPath();
+        ctx.arc(pod.x, pod.y, pod.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+        ctx.closePath();
+      });
+    }
+  </script>
+
+<script>
+    // Check for Collision with Obstacles
+    function checkObstacleCollision() {
+      obstacles.forEach((obstacle, index) => {
+        const dist = distance(spaceship.x, spaceship.y, obstacle.x, obstacle.y);
+        if (dist < spaceship.size + obstacle.size) {
+          alert('You hit an obstacle! Game Over.');
+          resetGame();
+        }
+      });
+    }
+
+    // Check for Collision with Refueling Pods
+    function checkRefuelCollision() {
+      refuelPods.forEach((pod, index) => {
+        const dist = distance(spaceship.x, spaceship.y, pod.x, pod.y);
+        if (dist < spaceship.size + pod.size) {
+          fuel = Math.min(fuel + 20, 100); // Replenish fuel
+          fuelElement.textContent = Math.floor(fuel);
+          refuelPods.splice(index, 1); // Remove collected pod
+        }
+      });
+    }
+  </script>
+
+<script>
+    // Update Game
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      applyGravity();
+      applyThrust();
+      updateSpaceship();
+
+      drawGravitySources();
+      drawObstacles();
+      drawRefuelPods();
+      drawSpaceship();
+
+      checkObstacleCollision();
+      checkRefuelCollision();
+
+      score += 0.1;
+      scoreElement.textContent = Math.floor(score);
+
+      if (fuel <= 0) {
+        alert('Out of fuel! Game Over. Final Score: ' + Math.floor(score));
+        resetGame();
+      }
+
+      requestAnimationFrame(updateGame);
+    }
+  </script>
+
+
+<script>
+    function checkLevelProgression() {
+      if (Math.floor(score) % 100 === 0 && Math.floor(score) !== 0) {
+        // Add new gravity sources
+        addGravitySource(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          8000
+        );
+
+        // Add more obstacles
+        addObstacle(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height
+        );
+
+        // Add more refueling pods
+        addRefuelPod(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height
+        );
+
+        alert('Level Up! New challenges added.');
+      }
+    }
+
+    // Integrate Level Progression in Game Loop
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      applyGravity();
+      applyThrust();
+      updateSpaceship();
+
+      drawGravitySources();
+      drawObstacles();
+      drawRefuelPods();
+      drawSpaceship();
+
+      checkObstacleCollision();
+      checkRefuelCollision();
+      checkLevelProgression();
+
+      score += 0.1;
+      scoreElement.textContent = Math.floor(score);
+
+      if (fuel <= 0) {
+        alert('Out of fuel! Game Over. Final Score: ' + Math.floor(score));
+        resetGame();
+      }
+
+      requestAnimationFrame(updateGame);
+    }
+  </script>
