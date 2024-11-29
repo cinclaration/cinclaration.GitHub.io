@@ -20,7 +20,7 @@
 <body>
   <canvas id="gameCanvas"></canvas>
   <script>
-    // Initialize Canvas
+    // Canvas and Context
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -31,109 +31,90 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
-  </script>
-</body>
-</html>
 
-<script>
-    // Pattern Variables
-    const wavePatterns = [];
-    const spiralPatterns = [];
+    const waves = []; // Array to store wave patterns
+    const ripples = []; // Array to store drag-based ripple effects
 
-    // Generate Waves
-    function generateWavePattern() {
-      for (let i = 0; i < 50; i++) {
-        wavePatterns.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          amplitude: Math.random() * 50 + 50, // Height of the wave
-          frequency: Math.random() * 0.05 + 0.01, // Speed of the wave
-          phase: Math.random() * Math.PI * 2, // Starting point in the wave
-          color: `hsl(${Math.random() * 360}, 70%, 70%)`,
+    // Generate HD Waves
+    function generateHDWaves() {
+      for (let i = 0; i < 5; i++) {
+        waves.push({
+          y: Math.random() * canvas.height, // Vertical position
+          amplitude: Math.random() * 50 + 50, // Wave height
+          frequency: Math.random() * 0.02 + 0.01, // Wave speed
+          phase: Math.random() * Math.PI * 2, // Wave phase
+          color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
+          speed: Math.random() * 0.03 + 0.01, // Speed of phase shift
         });
       }
     }
 
-    // Generate Spirals
-    function generateSpiralPattern() {
-      for (let i = 0; i < 10; i++) {
-        spiralPatterns.push({
-          x: canvas.width / 2,
-          y: canvas.height / 2,
-          radius: Math.random() * 50 + 100,
-          angle: Math.random() * Math.PI * 2,
-          rotationSpeed: Math.random() * 0.02 - 0.01, // Positive or negative spin
-          color: `hsl(${Math.random() * 360}, 80%, 60%)`,
-        });
-      }
-    }
-
-    // Draw Waves
-    function drawWaves() {
-      wavePatterns.forEach(wave => {
+    // Draw HD Waves
+    function drawHDWaves() {
+      waves.forEach(wave => {
         ctx.beginPath();
-        for (let x = 0; x < canvas.width; x++) {
+        for (let x = 0; x < canvas.width; x += 1) {
           const y =
             wave.y +
-            wave.amplitude * Math.sin(wave.frequency * x + wave.phase);
+            wave.amplitude *
+              Math.sin(wave.frequency * x + wave.phase); // Wave formula
           ctx.lineTo(x, y);
         }
         ctx.strokeStyle = wave.color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3; // Make the waves bold for HD effect
+        ctx.shadowBlur = 10; // Add a glow effect
+        ctx.shadowColor = wave.color;
         ctx.stroke();
         ctx.closePath();
 
-        // Update wave phase
-        wave.phase += 0.02;
+        // Animate wave phase
+        wave.phase += wave.speed;
       });
     }
 
-    // Draw Spirals
-    function drawSpirals() {
-      spiralPatterns.forEach(spiral => {
-        ctx.beginPath();
-        for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
-          const x =
-            spiral.x +
-            spiral.radius * Math.cos(angle + spiral.angle);
-          const y =
-            spiral.y +
-            spiral.radius * Math.sin(angle + spiral.angle);
-          ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = spiral.color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.closePath();
+    let isDragging = false;
 
-        // Update spiral rotation
-        spiral.angle += spiral.rotationSpeed;
-      });
-    }
+    // Start Drag
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      createRipple(e.clientX, e.clientY);
+    });
 
-    // Initialize Patterns
-    generateWavePattern();
-    generateSpiralPattern();
-  </script>
+    canvas.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      const touch = e.touches[0];
+      createRipple(touch.clientX, touch.clientY);
+    });
 
-<script>
-    const ripples = []; // Store active ripples
+    // Dragging
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        createRipple(e.clientX, e.clientY);
+      }
+    });
 
-    // Add a Ripple at Click Position
-    canvas.addEventListener('click', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+    canvas.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        const touch = e.touches[0];
+        createRipple(touch.clientX, touch.clientY);
+      }
+    });
 
+    // Stop Drag
+    canvas.addEventListener('mouseup', () => (isDragging = false));
+    canvas.addEventListener('touchend', () => (isDragging = false));
+
+    // Create Ripple
+    function createRipple(x, y) {
       ripples.push({
-        x: x,
-        y: y,
+        x,
+        y,
         radius: 0,
-        maxRadius: 150,
-        growthSpeed: 4,
+        maxRadius: 200,
+        growthSpeed: 5,
         color: 'rgba(255, 255, 255, 0.5)',
       });
-    });
+    }
 
     // Draw Ripples
     function drawRipples() {
@@ -148,66 +129,44 @@
         // Increase ripple radius
         ripple.radius += ripple.growthSpeed;
 
-        // Fade out and remove if the ripple exceeds its max radius
+        // Remove ripples that exceed their maximum size
         if (ripple.radius > ripple.maxRadius) {
           ripples.splice(index, 1);
         }
       });
     }
 
-    // Ripple Interaction with Waves
+    // Ripple-Wave Interaction
     function rippleWaveInteraction() {
       ripples.forEach(ripple => {
-        wavePatterns.forEach(wave => {
-          const dist = Math.sqrt(
-            (ripple.x - wave.x) ** 2 + (ripple.y - wave.y) ** 2
-          );
+        waves.forEach(wave => {
+          const dist = Math.abs(ripple.y - wave.y); // Distance between ripple and wave
           if (dist < ripple.radius) {
-            wave.amplitude *= 0.9; // Reduce wave amplitude slightly
-            wave.color = `hsl(${Math.random() * 360}, 70%, 80%)`; // Change wave color
+            // Distort wave properties temporarily
+            wave.amplitude += Math.random() * 10 - 5;
+            wave.frequency += Math.random() * 0.005 - 0.0025;
           }
         });
       });
     }
 
-    // Ripple Interaction with Spirals
-    function rippleSpiralInteraction() {
-      ripples.forEach(ripple => {
-        spiralPatterns.forEach(spiral => {
-          const dist = Math.sqrt(
-            (ripple.x - spiral.x) ** 2 + (ripple.y - spiral.y) ** 2
-          );
-          if (dist < ripple.radius) {
-            spiral.rotationSpeed *= -1; // Reverse spiral rotation
-            spiral.color = `hsl(${Math.random() * 360}, 80%, 70%)`; // Change spiral color
-          }
-        });
-      });
-    }
-  </script>
-
-<script>
     // Main Game Loop
     function animate() {
-      // Clear the canvas
+      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw and update elements
-      drawWaves(); // Draw wave patterns
-      drawSpirals(); // Draw spirals
-      drawRipples(); // Draw ripples
+      drawHDWaves(); // Draw high-definition waves
+      drawRipples(); // Draw drag-based ripples
+      rippleWaveInteraction(); // Interact ripples with waves
 
-      // Apply ripple interactions
-      rippleWaveInteraction();
-      rippleSpiralInteraction();
-
-      // Repeat the loop
+      // Loop the animation
       requestAnimationFrame(animate);
     }
 
-    // Start the game loop
-    animate();
+    // Initialize and Start the Game
+    generateHDWaves(); // Create the wave patterns
+    animate(); // Start the animation loop
   </script>
 </body>
 </html>
-
