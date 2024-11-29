@@ -1,96 +1,26 @@
-<!-- Firebase Configuration -->
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.getDatabase(app);
-
-  // Firebase Refs
-  const entitiesRef = firebase.ref(db, "entities");
-  const plantsRef = firebase.ref(db, "plants");
-  const ripplesRef = firebase.ref(db, "ripples");
-</script>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shared Ripple World</title>
+  <title>Sacred Geometry World</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background: black;
-      font-family: Arial, sans-serif;
     }
-
     canvas {
       display: block;
-      position: relative;
-      z-index: 1;
-    }
-
-    #menu {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      width: 200px;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 10;
-      cursor: grab;
-    }
-
-    #menu h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      color: #333;
-      text-align: center;
-    }
-
-    #menu button {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      font-size: 14px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    #menu button:hover {
-      background: #0056b3;
     }
   </style>
 </head>
 <body>
-  <div id="menu">
-    <h3>Game Menu</h3>
-    <button id="spawnEntity">Spawn Entity</button>
-    <button id="spawnPlant">Spawn Plant</button>
-    <button id="resetGame">Reset Game</button>
-  </div>
   <canvas id="gameCanvas"></canvas>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
   <script>
+    // Firebase Setup
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -100,106 +30,178 @@
       messagingSenderId: "YOUR_SENDER_ID",
       appId: "YOUR_APP_ID"
     };
-
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.getDatabase(app);
-    const entitiesRef = firebase.ref(db, "entities");
-    const plantsRef = firebase.ref(db, "plants");
 
+    // Firebase Refs
+    const entitiesRef = firebase.ref(db, "entities");
+    const ripplesRef = firebase.ref(db, "ripples");
+
+    // Canvas Setup
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    const entities = [];
-    const plants = [];
 
     window.addEventListener("resize", () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
 
-    class Entity {
-      constructor(id, x, y) {
+    const entities = [];
+    const ripples = [];
+
+    // Sacred Geometry Entity Class
+    class SacredEntity {
+      constructor(id, x, y, size, sides, color, phase) {
         this.id = id;
         this.x = x;
         this.y = y;
-        this.size = Math.random() * 10 + 10;
-        this.color = `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
+        this.size = size || Math.random() * 10 + 20;
+        this.sides = sides || Math.floor(Math.random() * 5) + 5;
+        this.color = color || `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
+        this.phase = phase || 0;
       }
 
-      draw() {
+      update() {
+        this.phase += 0.02; // Spin animation
+      }
+
+      draw(ctx) {
+        const angle = (Math.PI * 2) / this.sides;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
+        for (let i = 0; i < this.sides; i++) {
+          const px = this.x + Math.cos(angle * i + this.phase) * this.size;
+          const py = this.y + Math.sin(angle * i + this.phase) * this.size;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
         ctx.shadowBlur = 15;
         ctx.shadowColor = this.color;
-        ctx.fill();
+        ctx.stroke();
       }
     }
 
-    class Plant {
-      constructor(id, x, y) {
-        this.id = id;
+    // Ripple Class
+    class Ripple {
+      constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = 5;
+        this.radius = 0;
+        this.maxRadius = 50;
+        this.growthSpeed = 2;
+        this.color = `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`;
       }
 
-      draw() {
+      update() {
+        this.radius += this.growthSpeed;
+      }
+
+      draw(ctx) {
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = "green";
-        ctx.fill();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.stroke();
+        ctx.closePath();
+      }
+
+      isExpired() {
+        return this.radius >= this.maxRadius;
       }
     }
 
-    function addEntity(x, y) {
-      const id = Date.now().toString();
-      const entity = new Entity(id, x, y);
-      firebase.set(firebase.child(entitiesRef, id), { x, y });
+    // Create Ripple
+    function createRipple(x, y) {
+      const ripple = new Ripple(x, y);
+      ripples.push(ripple);
+
+      // Add Ripple to Firebase
+      firebase.push(ripplesRef, { x, y });
     }
 
-    function addPlant(x, y) {
+    // Add Entity to Firebase
+    function addEntityToFirebase(x, y) {
       const id = Date.now().toString();
-      const plant = new Plant(id, x, y);
-      firebase.set(firebase.child(plantsRef, id), { x, y });
+      const entityData = {
+        id,
+        x,
+        y,
+        size: Math.random() * 10 + 20,
+        sides: Math.floor(Math.random() * 5) + 5,
+        color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
+        phase: 0
+      };
+      firebase.set(firebase.child(entitiesRef, id), entityData);
     }
 
+    // Sync Entities with Firebase
     firebase.onChildAdded(entitiesRef, (snapshot) => {
-      const { x, y } = snapshot.val();
+      const data = snapshot.val();
+      const entity = new SacredEntity(data.id, data.x, data.y, data.size, data.sides, data.color, data.phase);
+      entities.push(entity);
+    });
+
+    firebase.onChildRemoved(entitiesRef, (snapshot) => {
       const id = snapshot.key;
-      entities.push(new Entity(id, x, y));
+      const index = entities.findIndex((entity) => entity.id === id);
+      if (index !== -1) entities.splice(index, 1);
     });
 
-    firebase.onChildAdded(plantsRef, (snapshot) => {
+    // Sync Ripples with Firebase
+    firebase.onChildAdded(ripplesRef, (snapshot) => {
       const { x, y } = snapshot.val();
-      const id = snapshot.key;
-      plants.push(new Plant(id, x, y));
+      ripples.push(new Ripple(x, y));
     });
 
-    document.getElementById("spawnEntity").addEventListener("click", () => {
-      addEntity(Math.random() * canvas.width, Math.random() * canvas.height);
+    // Mouse and Touch Interactions
+    let isDragging = false;
+
+    canvas.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      createRipple(e.clientX, e.clientY);
     });
 
-    document.getElementById("spawnPlant").addEventListener("click", () => {
-      addPlant(Math.random() * canvas.width, Math.random() * canvas.height);
+    canvas.addEventListener("mousemove", (e) => {
+      if (isDragging) createRipple(e.clientX, e.clientY);
     });
 
-    document.getElementById("resetGame").addEventListener("click", () => {
-      firebase.remove(entitiesRef);
-      firebase.remove(plantsRef);
+    canvas.addEventListener("mouseup", () => {
+      isDragging = false;
     });
 
-    function draw() {
+    // Spawn Entities Periodically
+    setInterval(() => {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      addEntityToFirebase(x, y);
+    }, 2000);
+
+    // Main Game Loop
+    function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      entities.forEach((entity) => entity.draw());
-      plants.forEach((plant) => plant.draw());
-      requestAnimationFrame(draw);
+
+      // Update and Draw Ripples
+      ripples.forEach((ripple, index) => {
+        ripple.update();
+        ripple.draw(ctx);
+        if (ripple.isExpired()) ripples.splice(index, 1);
+      });
+
+      // Update and Draw Entities
+      entities.forEach((entity) => {
+        entity.update();
+        entity.draw(ctx);
+      });
+
+      requestAnimationFrame(gameLoop);
     }
 
-    draw();
+    gameLoop();
   </script>
 </body>
 </html>
-
