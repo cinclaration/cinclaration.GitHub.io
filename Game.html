@@ -10,6 +10,7 @@
       overflow: hidden;
       background: black;
     }
+
     canvas {
       display: block;
     }
@@ -35,7 +36,7 @@
 
     // Firebase Refs
     const entitiesRef = firebase.ref(db, "entities");
-    const ripplesRef = firebase.ref(db, "ripples");
+    const distortionsRef = firebase.ref(db, "distortions");
 
     // Canvas Setup
     const canvas = document.getElementById("gameCanvas");
@@ -49,7 +50,7 @@
     });
 
     const entities = [];
-    const ripples = [];
+    const distortions = [];
 
     // Sacred Geometry Entity Class
     class SacredEntity {
@@ -57,7 +58,7 @@
         this.id = id;
         this.x = x;
         this.y = y;
-        this.size = size || Math.random() * 10 + 20;
+        this.size = size || Math.random() * 20 + 30;
         this.sides = sides || Math.floor(Math.random() * 5) + 5;
         this.color = color || `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
         this.phase = phase || 0;
@@ -84,19 +85,21 @@
       }
     }
 
-    // Ripple Class
-    class Ripple {
-      constructor(x, y) {
+    // Distortion Class
+    class Distortion {
+      constructor(id, x, y, radius) {
+        this.id = id;
         this.x = x;
         this.y = y;
-        this.radius = 0;
-        this.maxRadius = 50;
-        this.growthSpeed = 2;
-        this.color = `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`;
+        this.radius = radius || 0;
+        this.maxRadius = Math.random() * 50 + 50;
+        this.expansionRate = Math.random() * 2 + 1;
+        this.color = `hsla(${Math.random() * 360}, 70%, 70%, 0.5)`;
       }
 
       update() {
-        this.radius += this.growthSpeed;
+        this.radius += this.expansionRate;
+        if (this.radius > this.maxRadius) this.radius = 0; // Loop distortion
       }
 
       draw(ctx) {
@@ -104,34 +107,21 @@
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 2;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = this.color;
         ctx.stroke();
         ctx.closePath();
       }
-
-      isExpired() {
-        return this.radius >= this.maxRadius;
-      }
     }
 
-    // Create Ripple
-    function createRipple(x, y) {
-      const ripple = new Ripple(x, y);
-      ripples.push(ripple);
-
-      // Add Ripple to Firebase
-      firebase.push(ripplesRef, { x, y });
-    }
-
-    // Add Entity to Firebase
+    // Add Sacred Entity to Firebase
     function addEntityToFirebase(x, y) {
       const id = Date.now().toString();
       const entityData = {
         id,
         x,
         y,
-        size: Math.random() * 10 + 20,
+        size: Math.random() * 20 + 30,
         sides: Math.floor(Math.random() * 5) + 5,
         color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
         phase: 0
@@ -139,7 +129,22 @@
       firebase.set(firebase.child(entitiesRef, id), entityData);
     }
 
-    // Sync Entities with Firebase
+    // Add Distortion to Firebase
+    function addDistortionToFirebase(x, y) {
+      const id = Date.now().toString();
+      const distortionData = {
+        id,
+        x,
+        y,
+        radius: 0,
+        maxRadius: Math.random() * 50 + 50,
+        expansionRate: Math.random() * 2 + 1,
+        color: `hsla(${Math.random() * 360}, 70%, 70%, 0.5)`
+      };
+      firebase.set(firebase.child(distortionsRef, id), distortionData);
+    }
+
+    // Sync Sacred Entities with Firebase
     firebase.onChildAdded(entitiesRef, (snapshot) => {
       const data = snapshot.val();
       const entity = new SacredEntity(data.id, data.x, data.y, data.size, data.sides, data.color, data.phase);
@@ -152,44 +157,34 @@
       if (index !== -1) entities.splice(index, 1);
     });
 
-    // Sync Ripples with Firebase
-    firebase.onChildAdded(ripplesRef, (snapshot) => {
-      const { x, y } = snapshot.val();
-      ripples.push(new Ripple(x, y));
+    // Sync Distortions with Firebase
+    firebase.onChildAdded(distortionsRef, (snapshot) => {
+      const data = snapshot.val();
+      const distortion = new Distortion(data.id, data.x, data.y, data.radius);
+      distortions.push(distortion);
     });
 
     // Mouse and Touch Interactions
-    let isDragging = false;
-
     canvas.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      createRipple(e.clientX, e.clientY);
+      const x = e.clientX;
+      const y = e.clientY;
+      addEntityToFirebase(x, y);
     });
 
     canvas.addEventListener("mousemove", (e) => {
-      if (isDragging) createRipple(e.clientX, e.clientY);
+      const x = e.clientX;
+      const y = e.clientY;
+      addDistortionToFirebase(x, y);
     });
 
-    canvas.addEventListener("mouseup", () => {
-      isDragging = false;
-    });
-
-    // Spawn Entities Periodically
-    setInterval(() => {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      addEntityToFirebase(x, y);
-    }, 2000);
-
-    // Main Game Loop
+    // Main Animation Loop
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Update and Draw Ripples
-      ripples.forEach((ripple, index) => {
-        ripple.update();
-        ripple.draw(ctx);
-        if (ripple.isExpired()) ripples.splice(index, 1);
+      // Update and Draw Distortions
+      distortions.forEach((distortion) => {
+        distortion.update();
+        distortion.draw(ctx);
       });
 
       // Update and Draw Entities
