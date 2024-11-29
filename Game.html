@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sacred Geometry World</title>
+  <title>Fixed Sacred Geometry Game</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background: black;
+      background-color: black;
     }
-
     canvas {
       display: block;
     }
@@ -18,185 +17,82 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
   <script>
-    // Firebase Setup
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.getDatabase(app);
-
-    // Firebase Refs
-    const entitiesRef = firebase.ref(db, "entities");
-    const distortionsRef = firebase.ref(db, "distortions");
-
-    // Canvas Setup
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
 
-    window.addEventListener("resize", () => {
+    // Ensure canvas resizes correctly
+    function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-    });
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
-    const entities = [];
-    const distortions = [];
-
-    // Sacred Geometry Entity Class
-    class SacredEntity {
-      constructor(id, x, y, size, sides, color, phase) {
-        this.id = id;
+    class Entity {
+      constructor(x, y, size, sides, color) {
         this.x = x;
         this.y = y;
-        this.size = size || Math.random() * 20 + 30;
-        this.sides = sides || Math.floor(Math.random() * 5) + 5;
-        this.color = color || `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
-        this.phase = phase || 0;
+        this.size = size;
+        this.sides = sides;
+        this.color = color;
+        this.angle = 0;
       }
 
       update() {
-        this.phase += 0.02; // Spin animation
+        this.angle += 0.01; // Increment the angle for rotation
       }
 
-      draw(ctx) {
-        const angle = (Math.PI * 2) / this.sides;
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        const angleStep = (Math.PI * 2) / this.sides;
         ctx.beginPath();
         for (let i = 0; i < this.sides; i++) {
-          const px = this.x + Math.cos(angle * i + this.phase) * this.size;
-          const py = this.y + Math.sin(angle * i + this.phase) * this.size;
+          const px = this.size * Math.cos(i * angleStep);
+          const py = this.size * Math.sin(i * angleStep);
           i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
         }
         ctx.closePath();
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 2;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = this.color;
         ctx.stroke();
+        ctx.restore();
       }
     }
 
-    // Distortion Class
-    class Distortion {
-      constructor(id, x, y, radius) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
-        this.radius = radius || 0;
-        this.maxRadius = Math.random() * 50 + 50;
-        this.expansionRate = Math.random() * 2 + 1;
-        this.color = `hsla(${Math.random() * 360}, 70%, 70%, 0.5)`;
-      }
+    const entities = [];
 
-      update() {
-        this.radius += this.expansionRate;
-        if (this.radius > this.maxRadius) this.radius = 0; // Loop distortion
-      }
-
-      draw(ctx) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = this.color;
-        ctx.stroke();
-        ctx.closePath();
-      }
-    }
-
-    // Add Sacred Entity to Firebase
-    function addEntityToFirebase(x, y) {
-      const id = Date.now().toString();
-      const entityData = {
-        id,
-        x,
-        y,
-        size: Math.random() * 20 + 30,
-        sides: Math.floor(Math.random() * 5) + 5,
-        color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
-        phase: 0
-      };
-      firebase.set(firebase.child(entitiesRef, id), entityData);
-    }
-
-    // Add Distortion to Firebase
-    function addDistortionToFirebase(x, y) {
-      const id = Date.now().toString();
-      const distortionData = {
-        id,
-        x,
-        y,
-        radius: 0,
-        maxRadius: Math.random() * 50 + 50,
-        expansionRate: Math.random() * 2 + 1,
-        color: `hsla(${Math.random() * 360}, 70%, 70%, 0.5)`
-      };
-      firebase.set(firebase.child(distortionsRef, id), distortionData);
-    }
-
-    // Sync Sacred Entities with Firebase
-    firebase.onChildAdded(entitiesRef, (snapshot) => {
-      const data = snapshot.val();
-      const entity = new SacredEntity(data.id, data.x, data.y, data.size, data.sides, data.color, data.phase);
+    function createEntity(x, y) {
+      const size = Math.random() * 20 + 10; // Random size
+      const sides = Math.floor(Math.random() * 6) + 3; // Random sides (3-8)
+      const color = `hsl(${Math.random() * 360}, 100%, 50%)`; // Random color
+      const entity = new Entity(x, y, size, sides, color);
       entities.push(entity);
+    }
+
+    // Spawn entity on click
+    canvas.addEventListener("click", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      createEntity(x, y);
     });
 
-    firebase.onChildRemoved(entitiesRef, (snapshot) => {
-      const id = snapshot.key;
-      const index = entities.findIndex((entity) => entity.id === id);
-      if (index !== -1) entities.splice(index, 1);
-    });
-
-    // Sync Distortions with Firebase
-    firebase.onChildAdded(distortionsRef, (snapshot) => {
-      const data = snapshot.val();
-      const distortion = new Distortion(data.id, data.x, data.y, data.radius);
-      distortions.push(distortion);
-    });
-
-    // Mouse and Touch Interactions
-    canvas.addEventListener("mousedown", (e) => {
-      const x = e.clientX;
-      const y = e.clientY;
-      addEntityToFirebase(x, y);
-    });
-
-    canvas.addEventListener("mousemove", (e) => {
-      const x = e.clientX;
-      const y = e.clientY;
-      addDistortionToFirebase(x, y);
-    });
-
-    // Main Animation Loop
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Update and Draw Distortions
-      distortions.forEach((distortion) => {
-        distortion.update();
-        distortion.draw(ctx);
-      });
-
-      // Update and Draw Entities
+    // Animation loop
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
       entities.forEach((entity) => {
         entity.update();
-        entity.draw(ctx);
+        entity.draw();
       });
-
-      requestAnimationFrame(gameLoop);
+      requestAnimationFrame(animate); // Continue animation loop
     }
 
-    gameLoop();
+    // Start animation loop
+    animate();
   </script>
 </body>
 </html>
