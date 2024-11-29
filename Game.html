@@ -1,9 +1,33 @@
+<!-- Firebase Configuration -->
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.getDatabase(app);
+
+  // Firebase Refs
+  const entitiesRef = firebase.ref(db, "entities");
+  const plantsRef = firebase.ref(db, "plants");
+  const ripplesRef = firebase.ref(db, "ripples");
+</script>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ripple World Builder</title>
+  <title>Shared Ripple World</title>
   <style>
     body {
       margin: 0;
@@ -14,589 +38,168 @@
 
     canvas {
       display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    #menu {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 200px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      cursor: grab;
+    }
+
+    #menu h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #333;
+      text-align: center;
+    }
+
+    #menu button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 14px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #menu button:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
+  <div id="menu">
+    <h3>Game Menu</h3>
+    <button id="spawnEntity">Spawn Entity</button>
+    <button id="spawnPlant">Spawn Plant</button>
+    <button id="resetGame">Reset Game</button>
+  </div>
   <canvas id="gameCanvas"></canvas>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
   <script>
-    // Canvas Setup
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.getDatabase(app);
+    const entitiesRef = firebase.ref(db, "entities");
+    const plantsRef = firebase.ref(db, "plants");
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Resize Canvas
-    window.addEventListener('resize', () => {
+    const entities = [];
+    const plants = [];
+
+    window.addEventListener("resize", () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
 
-    const ripples = []; // Store ripples
-    const plants = []; // Store plants
-    const waterPatches = []; // Store water ripples
-    const particles = []; // Store glowing particles
-    const maxRippleRadius = Math.min(canvas.width, canvas.height) / 6; // Constrain ripple size
-
-    // Create Ripple
-    function createRipple(x, y) {
-      ripples.push({
-        x,
-        y,
-        radius: 0,
-        maxRadius: maxRippleRadius,
-        growthSpeed: 6,
-        color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
-        alpha: 0.7,
-      });
-
-      // Randomly decide what the ripple creates
-      const creationType = Math.random();
-      if (creationType < 0.4) {
-        spawnPlant(x, y); // 40% chance to grow a plant
-      } else if (creationType < 0.7) {
-        spawnWaterPatch(x, y); // 30% chance to expand water
-      } else {
-        spawnParticle(x, y); // 30% chance to spawn glowing particles
+    class Entity {
+      constructor(id, x, y) {
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 10 + 10;
+        this.color = `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
       }
-    }
 
-    // Draw Ripples
-    function drawRipples() {
-      ripples.forEach((ripple, index) => {
+      draw() {
         ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = ripple.color;
-        ctx.lineWidth = 2;
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
         ctx.shadowBlur = 15;
-        ctx.shadowColor = ripple.color;
-        ctx.stroke();
-        ctx.closePath();
-
-        ripple.radius += ripple.growthSpeed; // Expand ripple
-        ripple.alpha -= 0.01; // Fade ripple
-        ripple.color = ripple.color.replace(/[\d.]+\)$/g, `${ripple.alpha})`);
-
-        if (ripple.radius >= ripple.maxRadius || ripple.alpha <= 0) {
-          ripples.splice(index, 1); // Remove ripple when fully expanded or invisible
-        }
-      });
-    }
-
-    // Plant Creation
-    function spawnPlant(x, y) {
-      plants.push({
-        x,
-        y,
-        size: 5,
-        growthSpeed: 0.5,
-        maxSize: Math.random() * 15 + 10,
-        color: 'green',
-      });
-    }
-
-    function drawPlants() {
-      plants.forEach((plant, index) => {
-        ctx.beginPath();
-        ctx.arc(plant.x, plant.y, plant.size, 0, Math.PI * 2);
-        ctx.fillStyle = plant.color;
+        ctx.shadowColor = this.color;
         ctx.fill();
-        ctx.closePath();
-
-        // Grow the plant
-        if (plant.size < plant.maxSize) {
-          plant.size += plant.growthSpeed;
-        }
-      });
+      }
     }
 
-    // Water Ripple Creation
-    function spawnWaterPatch(x, y) {
-      waterPatches.push({
-        x,
-        y,
-        radius: 0,
-        maxRadius: Math.random() * 50 + 30,
-        color: 'rgba(0, 150, 255, 0.5)',
-        growthSpeed: 2,
-      });
-    }
+    class Plant {
+      constructor(id, x, y) {
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.size = 5;
+      }
 
-    function drawWaterPatches() {
-      waterPatches.forEach((patch, index) => {
+      draw() {
         ctx.beginPath();
-        ctx.arc(patch.x, patch.y, patch.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = patch.color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.closePath();
-
-        patch.radius += patch.growthSpeed;
-
-        if (patch.radius >= patch.maxRadius) {
-          waterPatches.splice(index, 1); // Remove patch when fully expanded
-        }
-      });
-    }
-
-    // Particle Creation
-    function spawnParticle(x, y) {
-      particles.push({
-        x,
-        y,
-        size: Math.random() * 5 + 2,
-        alpha: 1,
-        fadeSpeed: 0.02,
-        color: `hsla(${Math.random() * 360}, 80%, 70%, 1)`,
-      });
-    }
-
-    function drawParticles() {
-      particles.forEach((particle, index) => {
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = particle.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = particle.color;
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = "green";
         ctx.fill();
-        ctx.closePath();
-
-        // Fade particle
-        particle.alpha -= particle.fadeSpeed;
-        particle.color = particle.color.replace(/[\d.]+\)$/g, `${particle.alpha})`);
-
-        if (particle.alpha <= 0) {
-          particles.splice(index, 1); // Remove faded particle
-        }
-      });
+      }
     }
 
-    // Mouse and Touch Interactions
-    let isTouching = false;
+    function addEntity(x, y) {
+      const id = Date.now().toString();
+      const entity = new Entity(id, x, y);
+      firebase.set(firebase.child(entitiesRef, id), { x, y });
+    }
 
-    canvas.addEventListener('mousedown', (e) => {
-      isTouching = true;
-      const rect = canvas.getBoundingClientRect();
-      createRipple(e.clientX - rect.left, e.clientY - rect.top);
+    function addPlant(x, y) {
+      const id = Date.now().toString();
+      const plant = new Plant(id, x, y);
+      firebase.set(firebase.child(plantsRef, id), { x, y });
+    }
+
+    firebase.onChildAdded(entitiesRef, (snapshot) => {
+      const { x, y } = snapshot.val();
+      const id = snapshot.key;
+      entities.push(new Entity(id, x, y));
     });
 
-    canvas.addEventListener('mousemove', (e) => {
-      if (isTouching) {
-        const rect = canvas.getBoundingClientRect();
-        createRipple(e.clientX - rect.left, e.clientY - rect.top);
-      }
+    firebase.onChildAdded(plantsRef, (snapshot) => {
+      const { x, y } = snapshot.val();
+      const id = snapshot.key;
+      plants.push(new Plant(id, x, y));
     });
 
-    canvas.addEventListener('mouseup', () => (isTouching = false));
-
-    canvas.addEventListener('touchstart', (e) => {
-      isTouching = true;
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      createRipple(touch.clientX - rect.left, touch.clientY - rect.top);
+    document.getElementById("spawnEntity").addEventListener("click", () => {
+      addEntity(Math.random() * canvas.width, Math.random() * canvas.height);
     });
 
-    canvas.addEventListener('touchmove', (e) => {
-      if (isTouching) {
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        createRipple(touch.clientX - rect.left, touch.clientY - rect.top);
-      }
+    document.getElementById("spawnPlant").addEventListener("click", () => {
+      addPlant(Math.random() * canvas.width, Math.random() * canvas.height);
     });
 
-    canvas.addEventListener('touchend', () => (isTouching = false));
+    document.getElementById("resetGame").addEventListener("click", () => {
+      firebase.remove(entitiesRef);
+      firebase.remove(plantsRef);
+    });
 
-    // Main Animation Loop
-    function animate() {
+    function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      drawRipples(); // Draw ripples
-      drawPlants(); // Draw plants
-      drawWaterPatches(); // Draw water patches
-      drawParticles(); // Draw glowing particles
-
-      requestAnimationFrame(animate);
+      entities.forEach((entity) => entity.draw());
+      plants.forEach((plant) => plant.draw());
+      requestAnimationFrame(draw);
     }
 
-    // Start the Game
-    animate();
+    draw();
   </script>
 </body>
 </html>
-
-
-<style>
-  /* Menu Styling */
-  #menu {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 200px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-    cursor: grab;
-  }
-
-  #menu h3 {
-    margin: 0 0 10px;
-    font-size: 18px;
-    color: #333;
-    text-align: center;
-  }
-
-  #menu button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    font-size: 14px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  #menu button:hover {
-    background: #0056b3;
-  }
-</style>
-
-<div id="menu">
-  <h3>Simulation Menu</h3>
-  <button id="resetBtn">Reset Simulation</button>
-  <button id="toggleGravityBtn">Toggle Gravity</button>
-  <button id="spawnParticlesBtn">Spawn Particles</button>
-</div>
-
-
-
-
-
-<script>
-  // Menu Dragging Logic
-  const menu = document.getElementById("menu");
-  let isDragging = false;
-  let offsetX, offsetY;
-
-  menu.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    offsetX = e.clientX - menu.offsetLeft;
-    offsetY = e.clientY - menu.offsetTop;
-    menu.style.cursor = "grabbing";
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (isDragging) {
-      menu.style.left = `${e.clientX - offsetX}px`;
-      menu.style.top = `${e.clientY - offsetY}px`;
-    }
-  });
-
-  document.addEventListener("mouseup", () => {
-    isDragging = false;
-    menu.style.cursor = "grab";
-  });
-
-  // Menu Buttons Logic
-  document.getElementById("resetBtn").addEventListener("click", resetSimulation);
-  document.getElementById("toggleGravityBtn").addEventListener("click", toggleGravity);
-  document.getElementById("spawnParticlesBtn").addEventListener("click", spawnParticles);
-</script>
-
-
-
-
-<script>
-  const particles = [];
-  let gravityEnabled = false;
-
-  // Create Particles on Touch
-  function createParticle(x, y) {
-    particles.push({
-      x,
-      y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
-      size: Math.random() * 5 + 5,
-      color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
-      alpha: 1,
-    });
-  }
-
-  // Draw Particles
-  function drawParticles() {
-    particles.forEach((particle, index) => {
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx.fillStyle = particle.color.replace(/[\d.]+\)$/g, `${particle.alpha})`);
-      ctx.fill();
-      ctx.closePath();
-
-      // Update Particle Position
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-
-      // Apply Gravity if Enabled
-      if (gravityEnabled) particle.vy += 0.1;
-
-      // Fade Out and Remove Particle
-      particle.alpha -= 0.01;
-      if (particle.alpha <= 0) particles.splice(index, 1);
-    });
-  }
-</script>
-
-
-
-
-
-<script>
-  // Physics: Collision Detection
-  function handleParticleCollisions() {
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const p1 = particles[i];
-        const p2 = particles[j];
-        const dx = p1.x - p2.x;
-        const dy = p1.y - p2.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < p1.size + p2.size) {
-          // Bounce Particles
-          const angle = Math.atan2(dy, dx);
-          const speed1 = Math.sqrt(p1.vx * p1.vx + p1.vy * p1.vy);
-          const speed2 = Math.sqrt(p2.vx * p2.vx + p2.vy * p2.vy);
-
-          p1.vx = speed2 * Math.cos(angle);
-          p1.vy = speed2 * Math.sin(angle);
-          p2.vx = speed1 * Math.cos(angle + Math.PI);
-          p2.vy = speed1 * Math.sin(angle + Math.PI);
-
-          // Chemistry: Change Color on Collision
-          p1.color = `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
-          p2.color = `hsla(${Math.random() * 360}, 70%, 70%, 1)`;
-        }
-      }
-    }
-  }
-
-  // Reset Simulation
-  function resetSimulation() {
-    particles.length = 0; // Clear all particles
-  }
-
-  // Toggle Gravity
-  function toggleGravity() {
-    gravityEnabled = !gravityEnabled;
-  }
-
-  // Spawn Random Particles
-  function spawnParticles() {
-    for (let i = 0; i < 20; i++) {
-      createParticle(Math.random() * canvas.width, Math.random() * canvas.height);
-    }
-  }
-</script>
-
-
-
-<script>
-  // Main Animation Loop
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawParticles(); // Draw particles
-    handleParticleCollisions(); // Handle physics interactions
-
-    requestAnimationFrame(animate);
-  }
-
-  // Event Listeners for Touch and Mouse
-  canvas.addEventListener("mousedown", (e) => {
-    createParticle(e.clientX, e.clientY);
-  });
-
-  canvas.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    createParticle(touch.clientX, touch.clientY);
-  });
-
-  canvas.addEventListener("mousemove", (e) => {
-    if (e.buttons === 1) createParticle(e.clientX, e.clientY);
-  });
-
-  canvas.addEventListener("touchmove", (e) => {
-    const touch = e.touches[0];
-    createParticle(touch.clientX, touch.clientY);
-  });
-
-  // Start the Simulation
-  animate();
-</script>
-
-
-<script>
-  const entities = []; // Store DMT-like entities
-
-  // Spawn Entity
-  function spawnEntity(x, y) {
-    entities.push({
-      x,
-      y,
-      size: Math.random() * 10 + 10, // Initial size
-      energy: 100, // Energy level
-      growthRate: 0.1, // Growth speed
-      color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`, // Initial color
-      phase: 0, // For geometric animation
-    });
-  }
-
-  // Draw Entities
-  function drawEntities() {
-    entities.forEach((entity, index) => {
-      // Dynamic Geometry
-      const sides = Math.floor(entity.size / 2) + 3; // Polygons with 3+ sides
-      const angle = (Math.PI * 2) / sides;
-
-      ctx.beginPath();
-      for (let i = 0; i < sides; i++) {
-        const px = entity.x + Math.cos(angle * i + entity.phase) * entity.size;
-        const py = entity.y + Math.sin(angle * i + entity.phase) * entity.size;
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-
-      ctx.fillStyle = entity.color;
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = entity.color;
-      ctx.fill();
-
-      // Animate Geometry
-      entity.phase += 0.02;
-
-      // Evolve Entity
-      evolveEntity(entity);
-
-      // Remove if Energy is Depleted
-      if (entity.energy <= 0) {
-        entities.splice(index, 1);
-      }
-    });
-  }
-
-  // Evolve Entity
-  function evolveEntity(entity) {
-    entity.size += entity.growthRate; // Gradual growth
-    entity.energy -= 0.05; // Energy depletion over time
-
-    // Change color as it grows
-    entity.color = `hsla(${(parseInt(entity.color.match(/\d+/)[0]) + 1) % 360}, 70%, 70%, 1)`;
-  }
-</script>
-
-
-
-
-<script>
-  // Entity-Particle Interaction
-  function handleEntityInteractions() {
-    entities.forEach((entity) => {
-      particles.forEach((particle, index) => {
-        const dist = Math.hypot(entity.x - particle.x, entity.y - particle.y);
-        if (dist < entity.size + particle.size) {
-          // Consume Particle
-          entity.energy += 20; // Gain energy
-          entity.growthRate += 0.05; // Grow faster temporarily
-          particles.splice(index, 1); // Remove particle
-        }
-      });
-    });
-  }
-
-  // Entity-Ripple Interaction
-  function handleEntityRipples() {
-    ripples.forEach((ripple) => {
-      entities.forEach((entity) => {
-        const dist = Math.hypot(entity.x - ripple.x, entity.y - ripple.y);
-        if (dist < ripple.radius) {
-          // "Dance" Near Ripples
-          entity.color = ripple.color; // Absorb ripple color
-          entity.size += 0.2; // Grow slightly near ripples
-        }
-      });
-    });
-  }
-
-  // Entity-Plant Interaction
-  function handleEntityPlants() {
-    entities.forEach((entity) => {
-      plants.forEach((plant) => {
-        const dist = Math.hypot(entity.x - plant.x, entity.y - plant.y);
-        if (dist < entity.size) {
-          // Grow the Plant
-          plant.size += 0.1; // Help plant grow faster
-          entity.energy -= 0.2; // Lose energy for helping
-        }
-      });
-    });
-  }
-</script>
-
-
-<script>
-  // Enhance Ripple for Entity Interaction
-  function createRipple(x, y) {
-    ripples.push({
-      x,
-      y,
-      radius: 0,
-      maxRadius: maxRippleRadius,
-      growthSpeed: 6,
-      color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
-      alpha: 0.7,
-    });
-
-    // Spawn Entity with a Chance
-    if (Math.random() < 0.2) spawnEntity(x, y); // 20% chance to spawn entity
-  }
-
-  // Enhance Particle Behavior
-  function createParticle(x, y) {
-    particles.push({
-      x,
-      y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
-      size: Math.random() * 5 + 5,
-      color: `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
-      alpha: 1,
-    });
-  }
-</script>
-
-
-<script>
-  // Main Animation Loop
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawRipples(); // Render ripples
-    drawParticles(); // Render particles
-    drawPlants(); // Render plants
-    drawEntities(); // Render entities
-
-    handleEntityInteractions(); // Entity-particle interaction
-    handleEntityRipples(); // Entity-ripple interaction
-    handleEntityPlants(); // Entity-plant interaction
-
-    requestAnimationFrame(animate);
-  }
-
-  // Start the Simulation
-  animate();
-</script>
 
