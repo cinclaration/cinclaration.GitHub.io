@@ -46,6 +46,7 @@
     const targets = []; // Targets to hit with ripples
     let score = 0; // Game score
     const scoreboard = document.getElementById('score');
+    const maxRippleRadius = Math.min(canvas.width, canvas.height) / 4; // Ripple constraint
 
     // Create Ripple
     function createRipple(x, y) {
@@ -53,9 +54,10 @@
         x,
         y,
         radius: 0,
-        maxRadius: 150,
+        maxRadius: maxRippleRadius, // Constrain ripple size
         growthSpeed: 5,
         color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
+        alpha: 0.7, // Opacity for fade-out effect
       });
     }
 
@@ -74,8 +76,12 @@
         // Expand ripple radius
         ripple.radius += ripple.growthSpeed;
 
-        // Remove ripples that exceed max radius
-        if (ripple.radius > ripple.maxRadius) {
+        // Gradually fade out ripple
+        ripple.alpha -= 0.01;
+        ripple.color = ripple.color.replace(/[\d.]+\)$/g, `${ripple.alpha})`);
+
+        // Remove ripple when it reaches max size or becomes invisible
+        if (ripple.radius >= ripple.maxRadius || ripple.alpha <= 0) {
           ripples.splice(index, 1);
         }
       });
@@ -185,49 +191,6 @@
 
     // Start Game
     animate();
-  </script>
-
-<script>
-    const maxRippleRadius = Math.min(canvas.width, canvas.height) / 4; // Limit ripple size to 25% of screen size
-
-    // Create Ripple
-    function createRipple(x, y) {
-      ripples.push({
-        x,
-        y,
-        radius: 0,
-        maxRadius: maxRippleRadius, // Use constrained max size
-        growthSpeed: 4,
-        color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
-        alpha: 0.7, // Opacity for fade-out effect
-      });
-    }
-
-    // Draw Ripples with Constraints
-    function drawRipples() {
-      ripples.forEach((ripple, index) => {
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = ripple.color;
-        ctx.lineWidth = 2;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = ripple.color;
-        ctx.stroke();
-        ctx.closePath();
-
-        // Expand ripple radius
-        ripple.radius += ripple.growthSpeed;
-
-        // Gradually fade out ripple
-        ripple.alpha -= 0.01;
-        ripple.color = ripple.color.replace(/[\d.]+\)$/g, `${ripple.alpha})`);
-
-        // Remove ripple when it reaches max size or becomes invisible
-        if (ripple.radius >= ripple.maxRadius || ripple.alpha <= 0) {
-          ripples.splice(index, 1);
-        }
-      });
-    }
   </script>
 </body>
 </html>
