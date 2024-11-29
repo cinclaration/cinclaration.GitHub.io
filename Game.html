@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ripple Chase</title>
+  <title>Ripple World Builder</title>
   <style>
     body {
       margin: 0;
@@ -15,27 +15,9 @@
     canvas {
       display: block;
     }
-
-    #ui {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      color: white;
-    }
-
-    #ui div {
-      margin: 5px 0;
-      font-size: 20px;
-    }
   </style>
 </head>
 <body>
-  <div id="ui">
-    <div>Score: <span id="score">0</span></div>
-    <div>Combo: <span id="combo">1x</span></div>
-    <div>Time Left: <span id="timer">60</span> sec</div>
-  </div>
   <canvas id="gameCanvas"></canvas>
   <script>
     // Canvas Setup
@@ -50,17 +32,11 @@
       canvas.height = window.innerHeight;
     });
 
-    const ripples = [];
-    const targets = [];
-    const goldenChance = 0.1; // 10% chance for golden targets
-    let score = 0;
-    let comboMultiplier = 1;
-    let comboTimer = 0; // Time left in combo streak
-    let gameTimer = 60; // Game duration in seconds
-    const scoreboard = document.getElementById('score');
-    const comboDisplay = document.getElementById('combo');
-    const timerDisplay = document.getElementById('timer');
-    const maxRippleRadius = Math.min(canvas.width, canvas.height) / 4;
+    const ripples = []; // Store ripples
+    const plants = []; // Store plants
+    const waterPatches = []; // Store water ripples
+    const particles = []; // Store glowing particles
+    const maxRippleRadius = Math.min(canvas.width, canvas.height) / 6; // Constrain ripple size
 
     // Create Ripple
     function createRipple(x, y) {
@@ -69,10 +45,20 @@
         y,
         radius: 0,
         maxRadius: maxRippleRadius,
-        growthSpeed: 5,
+        growthSpeed: 6,
         color: `hsla(${Math.random() * 360}, 70%, 70%, 0.7)`,
         alpha: 0.7,
       });
+
+      // Randomly decide what the ripple creates
+      const creationType = Math.random();
+      if (creationType < 0.4) {
+        spawnPlant(x, y); // 40% chance to grow a plant
+      } else if (creationType < 0.7) {
+        spawnWaterPatch(x, y); // 30% chance to expand water
+      } else {
+        spawnParticle(x, y); // 30% chance to spawn glowing particles
+      }
     }
 
     // Draw Ripples
@@ -87,89 +73,102 @@
         ctx.stroke();
         ctx.closePath();
 
-        ripple.radius += ripple.growthSpeed;
-        ripple.alpha -= 0.01;
+        ripple.radius += ripple.growthSpeed; // Expand ripple
+        ripple.alpha -= 0.01; // Fade ripple
         ripple.color = ripple.color.replace(/[\d.]+\)$/g, `${ripple.alpha})`);
 
         if (ripple.radius >= ripple.maxRadius || ripple.alpha <= 0) {
-          ripples.splice(index, 1);
+          ripples.splice(index, 1); // Remove ripple when fully expanded or invisible
         }
       });
     }
 
-    // Spawn Target
-    function spawnTarget() {
-      const targetSize = Math.random() < goldenChance ? 30 : 20;
-      const targetLife = Math.random() < goldenChance ? 1500 : 3000; // Golden targets have shorter life
-      const x = Math.random() * (canvas.width - targetSize * 2) + targetSize;
-      const y = Math.random() * (canvas.height - targetSize * 2) + targetSize;
-      const isGolden = Math.random() < goldenChance;
-
-      targets.push({
+    // Plant Creation
+    function spawnPlant(x, y) {
+      plants.push({
         x,
         y,
-        size: targetSize,
-        color: isGolden ? 'gold' : `hsla(${Math.random() * 360}, 70%, 70%, 1)`,
-        life: targetLife,
-        golden: isGolden,
+        size: 5,
+        growthSpeed: 0.5,
+        maxSize: Math.random() * 15 + 10,
+        color: 'green',
       });
     }
 
-    // Draw Targets
-    function drawTargets() {
-      targets.forEach((target, index) => {
+    function drawPlants() {
+      plants.forEach((plant, index) => {
         ctx.beginPath();
-        ctx.arc(target.x, target.y, target.size, 0, Math.PI * 2);
-        ctx.fillStyle = target.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = target.color;
+        ctx.arc(plant.x, plant.y, plant.size, 0, Math.PI * 2);
+        ctx.fillStyle = plant.color;
         ctx.fill();
         ctx.closePath();
 
-        target.life -= 16.67; // Approximate frame time
-        if (target.life <= 0) {
-          targets.splice(index, 1);
-          comboMultiplier = 1; // Reset combo on miss
-          comboDisplay.textContent = `${comboMultiplier}x`;
-          score -= 10; // Penalize for missed targets
-          scoreboard.textContent = score;
+        // Grow the plant
+        if (plant.size < plant.maxSize) {
+          plant.size += plant.growthSpeed;
         }
       });
     }
 
-    // Check Ripple-Target Collision
-    function checkCollisions() {
-      ripples.forEach((ripple, rippleIndex) => {
-        targets.forEach((target, targetIndex) => {
-          const dist = Math.hypot(ripple.x - target.x, ripple.y - target.y);
-          if (dist < ripple.radius + target.size) {
-            // Target hit
-            if (target.golden) {
-              score += 50 * comboMultiplier; // Bonus for golden targets
-            } else {
-              score += 20 * comboMultiplier;
-            }
-            comboMultiplier += 1; // Increase combo
-            comboTimer = 3000; // Reset combo timer to 3 seconds
-            comboDisplay.textContent = `${comboMultiplier}x`;
-            scoreboard.textContent = score;
-
-            targets.splice(targetIndex, 1);
-            ripples.splice(rippleIndex, 1);
-          }
-        });
+    // Water Ripple Creation
+    function spawnWaterPatch(x, y) {
+      waterPatches.push({
+        x,
+        y,
+        radius: 0,
+        maxRadius: Math.random() * 50 + 30,
+        color: 'rgba(0, 150, 255, 0.5)',
+        growthSpeed: 2,
       });
     }
 
-    // Game Timer
-    function updateGameTimer() {
-      gameTimer -= 1;
-      timerDisplay.textContent = gameTimer;
+    function drawWaterPatches() {
+      waterPatches.forEach((patch, index) => {
+        ctx.beginPath();
+        ctx.arc(patch.x, patch.y, patch.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = patch.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.closePath();
 
-      if (gameTimer <= 0) {
-        alert(`Game Over! Final Score: ${score}`);
-        window.location.reload(); // Restart game
-      }
+        patch.radius += patch.growthSpeed;
+
+        if (patch.radius >= patch.maxRadius) {
+          waterPatches.splice(index, 1); // Remove patch when fully expanded
+        }
+      });
+    }
+
+    // Particle Creation
+    function spawnParticle(x, y) {
+      particles.push({
+        x,
+        y,
+        size: Math.random() * 5 + 2,
+        alpha: 1,
+        fadeSpeed: 0.02,
+        color: `hsla(${Math.random() * 360}, 80%, 70%, 1)`,
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach((particle, index) => {
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fillStyle = particle.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = particle.color;
+        ctx.fill();
+        ctx.closePath();
+
+        // Fade particle
+        particle.alpha -= particle.fadeSpeed;
+        particle.color = particle.color.replace(/[\d.]+\)$/g, `${particle.alpha})`);
+
+        if (particle.alpha <= 0) {
+          particles.splice(index, 1); // Remove faded particle
+        }
+      });
     }
 
     // Mouse and Touch Interactions
@@ -207,35 +206,19 @@
 
     canvas.addEventListener('touchend', () => (isTouching = false));
 
-    // Combo Timer
-    function updateComboTimer() {
-      if (comboTimer > 0) {
-        comboTimer -= 16.67; // Approximate frame time
-      } else {
-        comboMultiplier = 1;
-        comboDisplay.textContent = `${comboMultiplier}x`;
-      }
-    }
-
-    // Game Loop
+    // Main Animation Loop
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawRipples();
-      drawTargets();
-      checkCollisions();
-      updateComboTimer();
+      drawRipples(); // Draw ripples
+      drawPlants(); // Draw plants
+      drawWaterPatches(); // Draw water patches
+      drawParticles(); // Draw glowing particles
 
       requestAnimationFrame(animate);
     }
 
-    // Spawn Targets Periodically
-    setInterval(spawnTarget, 1000); // Spawn a new target every second
-
-    // Update Game Timer Periodically
-    setInterval(updateGameTimer, 1000); // Reduce timer every second
-
-    // Start Game
+    // Start the Game
     animate();
   </script>
 </body>
