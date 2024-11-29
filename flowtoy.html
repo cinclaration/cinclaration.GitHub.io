@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tree-Like Fractal Flow Toy</title>
+  <title>Mesmerizing Fractal Flow Toy</title>
   <style>
     body {
       margin: 0;
@@ -43,7 +43,7 @@
 </head>
 <body>
   <div id="controls">
-    <button id="startButton">Start Tree Fractal</button>
+    <button id="startButton">Start Fractal Toy</button>
   </div>
   <canvas id="canvas"></canvas>
   <script>
@@ -54,83 +54,97 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const trees = [];
-    let gyroscope = { beta: 0, gamma: 0 };
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const fractals = [];
 
-    // Adjust canvas size on resize
+    // Resize Canvas on Window Resize
     window.addEventListener("resize", () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
 
-    // Tree Fractal Class
-    class Tree {
-      constructor(x, y, size, depth) {
+    // Fractal Class
+    class Fractal {
+      constructor(x, y, size, depth, angle, color) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.depth = depth;
-        this.angle = Math.PI / 2; // Initial angle (upward)
-        this.color = `hsl(${Math.random() * 360}, 70%, 70%)`;
+        this.angle = angle;
+        this.color = color;
+        this.growthRate = 0.02; // Speed of growth
+        this.currentDepth = 0; // Start depth for animation
       }
 
-      draw(ctx, x, y, size, depth, angle) {
-        if (depth === 0) return;
+      draw(ctx) {
+        if (this.currentDepth >= this.depth) return;
 
-        const newX = x + Math.cos(angle) * size;
-        const newY = y - Math.sin(angle) * size;
+        const endX = this.x + Math.cos(this.angle) * this.size;
+        const endY = this.y - Math.sin(this.angle) * this.size;
 
         ctx.strokeStyle = this.color;
-        ctx.lineWidth = depth;
+        ctx.lineWidth = Math.max(1, this.depth - this.currentDepth);
+        ctx.lineCap = "round";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(newX, newY);
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(endX, endY);
         ctx.stroke();
 
-        // Recursive branching
-        const newSize = size * 0.7;
-        const angleVariation = Math.PI / 6; // Branching angle
-        this.draw(ctx, newX, newY, newSize, depth - 1, angle + angleVariation); // Right branch
-        this.draw(ctx, newX, newY, newSize, depth - 1, angle - angleVariation); // Left branch
+        // Recursive Branching
+        if (this.currentDepth < this.depth) {
+          const branch1 = new Fractal(
+            endX,
+            endY,
+            this.size * 0.7,
+            this.depth,
+            this.angle - Math.PI / 6,
+            this.color
+          );
+          const branch2 = new Fractal(
+            endX,
+            endY,
+            this.size * 0.7,
+            this.depth,
+            this.angle + Math.PI / 6,
+            this.color
+          );
+
+          branch1.currentDepth = this.currentDepth + 1;
+          branch2.currentDepth = this.currentDepth + 1;
+
+          branch1.draw(ctx);
+          branch2.draw(ctx);
+        }
       }
 
-      update() {
-        // Morph angle with gyroscope
-        this.angle += (gyroscope.gamma / 100) * 0.1;
-        this.y += gyroscope.beta * 0.1; // Move tree with tilt
-        this.y = Math.max(0, Math.min(canvas.height, this.y)); // Stay within bounds
-      }
-
-      render(ctx) {
-        this.update();
-        this.draw(ctx, this.x, this.y, this.size, this.depth, this.angle);
+      grow() {
+        this.size += this.growthRate;
       }
     }
 
-    // Generate Trees
-    function generateTrees() {
-      trees.length = 0;
-      for (let i = 0; i < 3; i++) {
-        const x = Math.random() * canvas.width;
-        const y = canvas.height - 50;
-        const size = Math.random() * 50 + 50;
-        const depth = Math.floor(Math.random() * 4) + 4;
-        trees.push(new Tree(x, y, size, depth));
+    // Generate Fractals
+    function generateFractals() {
+      const colors = ["#FF6347", "#FFD700", "#1E90FF", "#32CD32"];
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3; // Spread fractals evenly
+        const color = colors[i % colors.length];
+        fractals.push(
+          new Fractal(centerX, centerY, 50, 6, angle, color)
+        );
       }
     }
-
-    // Gyroscope Input
-    window.addEventListener("deviceorientation", (event) => {
-      gyroscope.beta = event.beta || 0; // Forward-back tilt
-      gyroscope.gamma = event.gamma || 0; // Left-right tilt
-    });
 
     // Animation Loop
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      trees.forEach((tree) => {
-        tree.render(ctx);
+      fractals.forEach((fractal) => {
+        fractal.grow();
+        fractal.draw(ctx);
       });
 
       requestAnimationFrame(animate);
@@ -139,7 +153,7 @@
     // Start Button Listener
     startButton.addEventListener("click", () => {
       startButton.style.display = "none"; // Hide button
-      generateTrees();
+      generateFractals();
       animate();
     });
   </script>
