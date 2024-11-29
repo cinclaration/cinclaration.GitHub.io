@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cosmic Drift Game</title>
   <style>
-    /* Full Page Reset */
     body {
       margin: 0;
       overflow: hidden;
@@ -13,7 +12,6 @@
       background-color: black;
     }
 
-    /* Menu Button */
     #menu-button {
       position: absolute;
       top: 10px;
@@ -24,7 +22,6 @@
       z-index: 10;
     }
 
-    /* Dropdown Menu */
     #dropdown-menu {
       position: absolute;
       top: 70px;
@@ -38,7 +35,6 @@
       z-index: 10;
     }
 
-    /* Menu Buttons */
     #dropdown-menu button {
       background-color: #007bff;
       color: white;
@@ -54,7 +50,6 @@
       background-color: #0056b3;
     }
 
-    /* Scoreboard UI */
     #scoreboard {
       position: absolute;
       top: 10px;
@@ -66,34 +61,20 @@
   </style>
 </head>
 <body>
-  <!-- Main Game Canvas -->
   <canvas id="gameCanvas"></canvas>
-
-  <!-- Menu Button -->
   <img id="menu-button" src="https://i.imgur.com/fINCGcJ.png" alt="Menu">
-
-  <!-- Dropdown Menu -->
   <div id="dropdown-menu">
     <button id="toggle-controls">Switch to Gyroscope</button>
     <button id="restart-game">Restart Game</button>
   </div>
-
-  <!-- Scoreboard -->
   <div id="scoreboard">
     <p>Score: <span id="score">0</span></p>
     <p>Time Left: <span id="timer">30</span></p>
   </div>
 
-
-
-
-<!-- SECTION 2: JAVASCRIPT INITIALIZATION -->
-  <script>
-    // Canvas and Context
+<script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-
-    // UI Elements
     const menuButton = document.getElementById('menu-button');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const toggleControlsButton = document.getElementById('toggle-controls');
@@ -103,7 +84,7 @@
 
     // Game Variables
     let spaceship = { x: 400, y: 300, size: 50, angle: 0, speedX: 0, speedY: 0 };
-    const playArea = { width: 1600, height: 1200 }; // Larger play area for scrolling
+    const playArea = { width: canvas.width, height: canvas.height };
     let score = 0;
     let timer = 30;
     let goals = [];
@@ -130,7 +111,6 @@
       canvas.height = window.innerHeight;
     }
 
-    // Adjust Canvas Size on Resize
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
@@ -140,67 +120,11 @@
     });
   </script>
 
-
-<!-- SECTION 3: GAME RESET AND ENTITY SPAWNING -->
-  <script>
-    // Reset Game State
-    function resetGame() {
-      score = 0;
-      timer = 30;
-      goals = [];
-      obstacles = [];
-      spawnEntities(goals, 5, 50); // Spawn 5 goals
-      spawnEntities(obstacles, 5, 50); // Spawn 5 obstacles
-      scoreElement.textContent = score;
-      timerElement.textContent = timer;
-
-      // Reset spaceship position and velocity
-      spaceship.x = canvas.width / 2;
-      spaceship.y = canvas.height / 2;
-      spaceship.speedX = 0;
-      spaceship.speedY = 0;
-
-      // Unpause the game
-      isPaused = false;
-    }
-
-    // Spawn Entities (Goals or Obstacles)
-    function spawnEntities(entityArray, count, size) {
-      for (let i = 0; i < count; i++) {
-        let entity;
-        do {
-          entity = {
-            x: Math.random() * playArea.width,
-            y: Math.random() * playArea.height,
-            size: size,
-          };
-        } while (entityArray.some(e => isColliding(e, entity))); // Avoid overlapping
-        entityArray.push(entity);
-      }
-    }
-
-    // Check for Collision Between Two Entities
-    function isColliding(a, b) {
-      return (
-        a.x < b.x + b.size &&
-        a.x + a.size > b.x &&
-        a.y < b.y + b.size &&
-        a.y + a.size > b.y
-      );
-    }
-  </script>
-
-
-<!-- SECTION 4: RENDERING THE GAME -->
-  <script>
+<script>
     // Draw Background
     function drawBackground() {
       ctx.drawImage(
         backgroundImg,
-        0,
-        0,
-        playArea.width,
-        playArea.height,
         0,
         0,
         canvas.width,
@@ -208,7 +132,7 @@
       );
     }
 
-    // Draw Entities (Goals and Obstacles)
+    // Draw Entities
     function drawEntities(entityArray, image) {
       entityArray.forEach(entity => {
         ctx.drawImage(image, entity.x, entity.y, entity.size, entity.size);
@@ -231,99 +155,80 @@
     }
   </script>
 
-
-<!-- SECTION 5: GAME LOOP AND STATE UPDATES -->
-  <script>
+<script>
     // Update Game State
     function updateGame() {
-      // Timer Countdown
       if (timer > 0 && !isPaused) {
-        timer -= 1 / 60; // Decrease timer by 1/60th of a second
+        timer -= 1 / 60;
         timerElement.textContent = Math.floor(timer);
       } else if (timer <= 0) {
         isPaused = true;
         alert('Game Over! Final Score: ' + score);
       }
 
-      // Check for Collisions with Goals
+      // Collision Detection
       goals.forEach((goal, index) => {
         if (isColliding(spaceship, goal)) {
-          score += 10; // Increase score
+          score += 10;
           scoreElement.textContent = score;
-          goals.splice(index, 1); // Remove collected goal
+          goals.splice(index, 1);
         }
       });
 
-      // Check for Collisions with Obstacles
       obstacles.forEach((obstacle, index) => {
         if (isColliding(spaceship, obstacle)) {
-          score -= 5; // Decrease score
+          score -= 5;
           scoreElement.textContent = score;
-          obstacles.splice(index, 1); // Remove obstacle
+          obstacles.splice(index, 1);
         }
       });
     }
 
-    // Main Game Loop
+    // Game Loop
     function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (!isPaused) {
-        drawBackground(); // Render background
-        drawEntities(goals, goalImg); // Render goals
-        drawEntities(obstacles, obstacleImg); // Render obstacles
-        drawSpaceship(); // Render spaceship
-        updateGame(); // Update game state
+        drawBackground(); // Static background
+        drawEntities(goals, goalImg);
+        drawEntities(obstacles, obstacleImg);
+        drawSpaceship();
+        updateGame();
       }
 
-      requestAnimationFrame(gameLoop); // Repeat loop
+      requestAnimationFrame(gameLoop);
     }
   </script>
 
 
 
-<!-- SECTION 6: INPUT CONTROLS (TOUCH AND GYROSCOPE) -->
-  <script>
-    // Touch Controls
-    canvas.addEventListener('mousemove', (e) => {
-      if (!gyroscopeEnabled && !isPaused) {
-        const rect = canvas.getBoundingClientRect();
-        spaceship.x = e.clientX - rect.left;
-        spaceship.y = e.clientY - rect.top;
-      }
-    });
+<script>
+    // Reset Game
+    function resetGame() {
+      score = 0;
+      timer = 30;
+      goals = [];
+      obstacles = [];
+      spaceship.x = canvas.width / 2;
+      spaceship.y = canvas.height / 2;
+      spawnEntities(goals, 5, 50);
+      spawnEntities(obstacles, 5, 50);
+      scoreElement.textContent = score;
+      timerElement.textContent = timer;
+      isPaused = false;
+    }
 
-    // Gyroscope Controls
-    window.addEventListener('deviceorientation', (event) => {
-      if (gyroscopeEnabled && !isPaused) {
-        const sensitivity = 0.2; // Adjust this value for gyroscope sensitivity
-        spaceship.speedX = event.gamma * sensitivity; // Tilt left/right
-        spaceship.speedY = event.beta * sensitivity; // Tilt forward/backward
-
-        // Update spaceship position
-        spaceship.x += spaceship.speedX;
-        spaceship.y += spaceship.speedY;
-
-        // Keep spaceship within canvas bounds
-        spaceship.x = Math.max(0, Math.min(canvas.width, spaceship.x));
-        spaceship.y = Math.max(0, Math.min(canvas.height, spaceship.y));
-      }
-    });
-  </script>
-
-
-<!-- SECTION 7: GAME INITIALIZATION AND START -->
-  <script>
-    // Initialize Game
+    // Start Game
     function initializeGame() {
-      resetGame(); // Reset the game state and spawn entities
-      gameLoop(); // Start the main game loop
+      resetGame();
+      gameLoop();
     }
 
-    // Start Game After Assets Are Loaded
+    // Run Game
     window.onload = () => {
       initializeGame();
     };
   </script>
 </body>
 </html>
+
