@@ -82,6 +82,9 @@
       return node;
     }
 
+    // Debug: Add Initial Node to Verify Rendering
+    createNode(0, 0, 0);
+
     // Save Node to Firebase
     function saveNodeToFirebase(x, y, z) {
       firebase.push(nodesRef, { x, y, z });
