@@ -1,105 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hyperspace Simulator</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: radial-gradient(circle, #121212, #000);
-      font-family: Arial, sans-serif;
-    }
-
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 0.9rem;
-      z-index: 10;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperspace Simulator</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
-  <div id="info">Drag to create nodes and watch them connect!</div>
-  <canvas id="canvas"></canvas>
-
-  <!-- Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <script>
-    // Initialize Three.js
-    const canvas = document.getElementById('canvas');
-    const renderer = new THREE.WebGLRenderer({ canvas });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 10);
-
-    const nodes = [];
-    const connections = [];
-
-    // Node Material
-    const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x007bff });
-
-    // Add Node Function
-    function addNode(x, y, z) {
-      const geometry = new THREE.SphereGeometry(0.3, 16, 16);
-      const node = new THREE.Mesh(geometry, nodeMaterial);
-      node.position.set(x, y, z);
-      scene.add(node);
-      nodes.push(node);
-
-      connectToNearbyNodes(node);
-    }
-
-    // Connect Node Function
-    function connectToNearbyNodes(newNode) {
-      nodes.forEach((node) => {
-        if (node !== newNode && node.position.distanceTo(newNode.position) < 5) {
-          const points = [node.position, newNode.position];
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-          const line = new THREE.Line(geometry, lineMaterial);
-          scene.add(line);
-          connections.push(line);
-        }
-      });
-    }
-
-    // Mouse Events
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let isDragging = false;
-
-    function onPointerMove(event) {
-      if (!isDragging) return;
-
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const point = raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(10));
-      addNode(point.x, point.y, point.z);
-    }
-
-    canvas.addEventListener('pointerdown', () => (isDragging = true));
-    canvas.addEventListener('pointerup', () => (isDragging = false));
-    canvas.addEventListener('pointermove', onPointerMove);
-
-    // Animation Loop
-    function animate() {
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-  </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
+
+// Setup scene
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Create a dark background
+scene.background = new THREE.Color(0x000000);
+
+// Lighting
+const light = new THREE.PointLight(0xFFFFFF, 1, 100);
+light.position.set(0, 0, 5);
+scene.add(light);
+
+// Node class
+class Node {
+    constructor(x, y, z) {
+        this.position = new THREE.Vector3(x, y, z);
+        this.energy = Math.random() * 100;
+        this.connectivity = 0;
+        this.intelligence = Math.random() * 100;
+        this.age = 0;
+        this.sphere = this.createNode();
+    }
+
+    createNode() {
+        const geometry = new THREE.SphereGeometry(0.1, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`)
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.set(this.position.x, this.position.y, this.position.z);
+        scene.add(sphere);
+        return sphere;
+    }
+
+    update() {
+        this.age += 0.01;
+        this.energy -= 0.1; // energy decreases over time
+        if (this.energy <= 0) {
+            scene.remove(this.sphere);
+        }
+        this.sphere.material.color.setHSL(this.energy / 100, 1, 0.5);
+    }
+}
+
+// Node collection
+let nodes = [];
+
+// Function to create nodes based on mouse or touch input
+function createNode(event) {
+    const x = (event.clientX / window.innerWidth) * 2 - 1;
+    const y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const z = Math.random() * 2 - 1;
+    nodes.push(new Node(x * 10, y * 10, z * 10)); // Scale positions for better view
+}
+
+// Handle mouse movement for node creation
+window.addEventListener('mousemove', createNode);
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Update nodes
+    nodes.forEach(node => node.update());
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Set camera position
+camera.position.z = 5;
+
