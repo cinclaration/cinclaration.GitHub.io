@@ -8,12 +8,19 @@ document.body.appendChild(renderer.domElement);
 // Create a dark background
 scene.background = new THREE.Color(0x000000);
 
-// Lighting: Add a point light to illuminate the nodes
+// Lighting: Add a moving point light
 const light = new THREE.PointLight(0xFFFFFF, 1, 100);
-light.position.set(0, 0, 5); // Position the light in front of the scene
+light.position.set(10, 10, 10);
 scene.add(light);
 
-// Node class
+// Dynamic lighting movement
+function animateLight() {
+    light.position.x = Math.sin(Date.now() * 0.001) * 10;
+    light.position.y = Math.cos(Date.now() * 0.001) * 10;
+    light.position.z = Math.sin(Date.now() * 0.001) * 5;
+}
+
+// Glowing Node class
 class Node {
     constructor(x, y, z) {
         this.position = new THREE.Vector3(x, y, z);
@@ -27,7 +34,9 @@ class Node {
     createNode() {
         const geometry = new THREE.SphereGeometry(0.1, 32, 32);
         const material = new THREE.MeshBasicMaterial({
-            color: new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`)
+            color: new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`),
+            emissive: new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`),  // Glowing effect
+            emissiveIntensity: 0.5
         });
         const sphere = new THREE.Mesh(geometry, material);
         sphere.position.set(this.position.x, this.position.y, this.position.z);
@@ -70,10 +79,6 @@ class Connection {
     }
 }
 
-// Node collection and connections
-let nodes = [];
-let connections = [];
-
 // Flower of Life pattern (simple 2D version for node placement)
 function flowerOfLife(radius, numCircles, zLevel) {
     const points = [];
@@ -97,21 +102,21 @@ function platonicSolid() {
     ];
 }
 
-// Function to create nodes based on sacred geometry
+// Create nodes based on sacred geometry
 function createSacredNodes() {
-    // Flower of Life (2D) pattern with radius of 5 and 6 circles
+    // Flower of Life pattern
     const flowerPoints = flowerOfLife(5, 6, 0);
     flowerPoints.forEach(point => {
         nodes.push(new Node(point.x, point.y, point.z));
     });
 
-    // Platonic Solid (Tetrahedron) nodes
+    // Platonic Solid (Tetrahedron)
     const tetrahedronNodes = platonicSolid();
     tetrahedronNodes.forEach(point => {
         nodes.push(new Node(point.x * 3, point.y * 3, point.z * 3));
     });
 
-    // Create connections between nodes (basic distance check)
+    // Create connections between nodes
     nodes.forEach((node, index) => {
         nodes.forEach((otherNode, otherIndex) => {
             if (index !== otherIndex) {
@@ -124,10 +129,20 @@ function createSacredNodes() {
     });
 }
 
-// Create nodes based on sacred geometry
+// Node collection and connections
+let nodes = [];
+let connections = [];
+
+// Create sacred nodes
 createSacredNodes();
 
-// Add an animation loop to update and render the scene
+// Add OrbitControls for smooth camera movement
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;  // Enable smooth damping
+controls.dampingFactor = 0.25;
+controls.screenSpacePanning = false;
+
+// Animation loop to update and render the scene
 function animate() {
     requestAnimationFrame(animate);
 
@@ -136,6 +151,12 @@ function animate() {
 
     // Update all connections
     connections.forEach(connection => connection.update());
+
+    // Update dynamic light position
+    animateLight();
+
+    // Update controls (for camera movement)
+    controls.update();  // Only required if controls.enableDamping = true
 
     // Render the scene from the camera's perspective
     renderer.render(scene, camera);
