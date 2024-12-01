@@ -43,17 +43,19 @@
   <script>
     // Firebase Initialization
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyDO8OI_j_lqNmcjK5sw5t6ebR_-q2P4pu0",
+      authDomain: "gearelic-20939.firebaseapp.com",
+      databaseURL: "https://gearelic-20939-default-rtdb.firebaseio.com",
+      projectId: "gearelic-20939",
+      storageBucket: "gearelic-20939.appspot.com",
+      messagingSenderId: "491990312374",
+      appId: "1:491990312374:web:ad7f7072c84cf52267cd17",
+      measurementId: "G-3SBX3NJ1D1"
     };
+
     const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.getDatabase(app);
-    const nodesRef = firebase.ref(db, "nodes");
+    const database = firebase.getDatabase(app);
+    const nodesRef = firebase.ref(database, "nodes");
 
     // Three.js Setup
     const canvas = document.getElementById('geometryCanvas');
@@ -68,9 +70,7 @@
     const mouse = new THREE.Vector2();
 
     const nodes = [];
-    const connections = [];
     const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
 
     // Function to Create a Node
     function createNode(x, y, z) {
@@ -82,70 +82,37 @@
       return node;
     }
 
-    // Function to Connect Nodes
-    function connectNodes(node1, node2) {
-      const points = [node1.position, node2.position];
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(geometry, lineMaterial);
-      scene.add(line);
-      connections.push(line);
+    // Save Node to Firebase
+    function saveNodeToFirebase(x, y, z) {
+      firebase.push(nodesRef, { x, y, z });
     }
 
-    // Node Placement and Firebase Storage
+    // Retrieve Nodes from Firebase
+    firebase.onChildAdded(nodesRef, (snapshot) => {
+      const data = snapshot.val();
+      createNode(data.x, data.y, data.z);
+    });
+
+    // Handle Node Placement
     function onCanvasClick(event) {
       const rect = canvas.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(scene);
-
       const point = raycaster.ray.origin.clone().add(raycaster.ray.direction.multiplyScalar(10));
-      const newNode = createNode(point.x, point.y, point.z);
-
-      // Save Node to Firebase
-      firebase.push(nodesRef, { x: point.x, y: point.y, z: point.z });
-
-      // Connect New Node to Nearby Nodes
-      nodes.forEach(node => {
-        if (node !== newNode && node.position.distanceTo(newNode.position) < 5) {
-          connectNodes(newNode, node);
-        }
-      });
+      createNode(point.x, point.y, point.z);
+      saveNodeToFirebase(point.x, point.y, point.z);
     }
 
-    // Firebase Real-Time Sync
-    firebase.onChildAdded(nodesRef, (snapshot) => {
-      const data = snapshot.val();
-      createNode(data.x, data.y, data.z);
-    });
-
-    // Self-Organizing Logic
-    function organizeNodes() {
-      nodes.forEach(node => {
-        nodes.forEach(other => {
-          if (node !== other) {
-            const distance = node.position.distanceTo(other.position);
-            if (distance < 5) {
-              const direction = other.position.clone().sub(node.position).normalize();
-              node.position.add(direction.multiplyScalar(0.01)); // Move nodes slightly apart
-            }
-          }
-        });
-      });
-    }
+    canvas.addEventListener('click', onCanvasClick);
 
     // Animation Loop
     function animate() {
-      organizeNodes();
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
 
-    // Event Listener
-    canvas.addEventListener('click', onCanvasClick);
-
-    // Start Animation
     animate();
   </script>
 </body>
