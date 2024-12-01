@@ -45,19 +45,87 @@ class Node {
     }
 }
 
-// Node collection
-let nodes = [];
+// Connection class to draw lines between nodes
+class Connection {
+    constructor(node1, node2) {
+        this.node1 = node1;
+        this.node2 = node2;
+        this.line = this.createLine();
+    }
 
-// Function to create nodes based on mouse or touch input
-function createNode(event) {
-    const x = (event.clientX / window.innerWidth) * 2 - 1;
-    const y = -(event.clientY / window.innerHeight) * 2 + 1;
-    const z = Math.random() * 2 - 1; // Random z-position for 3D effect
-    nodes.push(new Node(x * 10, y * 10, z * 10)); // Scale positions for better view
+    createLine() {
+        const geometry = new THREE.Geometry();
+        geometry.vertices.push(this.node1.position);
+        geometry.vertices.push(this.node2.position);
+        const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+        return line;
+    }
+
+    update() {
+        this.line.geometry.vertices[0] = this.node1.position;
+        this.line.geometry.vertices[1] = this.node2.position;
+        this.line.geometry.verticesNeedUpdate = true;
+    }
 }
 
-// Handle mouse movement for node creation
-window.addEventListener('mousemove', createNode);
+// Node collection and connections
+let nodes = [];
+let connections = [];
+
+// Flower of Life pattern (simple 2D version for node placement)
+function flowerOfLife(radius, numCircles, zLevel) {
+    const points = [];
+    const angleStep = Math.PI * 2 / numCircles;
+    for (let i = 0; i < numCircles; i++) {
+        const angle = i * angleStep;
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+        points.push(new THREE.Vector3(x, y, zLevel));
+    }
+    return points;
+}
+
+// Platonic Solid: Tetrahedron vertices as example
+function platonicSolid() {
+    return [
+        new THREE.Vector3(1, 1, 1),
+        new THREE.Vector3(1, -1, -1),
+        new THREE.Vector3(-1, 1, -1),
+        new THREE.Vector3(-1, -1, 1),
+    ];
+}
+
+// Function to create nodes based on sacred geometry
+function createSacredNodes() {
+    // Flower of Life (2D) pattern with radius of 5 and 6 circles
+    const flowerPoints = flowerOfLife(5, 6, 0);
+    flowerPoints.forEach(point => {
+        nodes.push(new Node(point.x, point.y, point.z));
+    });
+
+    // Platonic Solid (Tetrahedron) nodes
+    const tetrahedronNodes = platonicSolid();
+    tetrahedronNodes.forEach(point => {
+        nodes.push(new Node(point.x * 3, point.y * 3, point.z * 3));
+    });
+
+    // Create connections between nodes (basic distance check)
+    nodes.forEach((node, index) => {
+        nodes.forEach((otherNode, otherIndex) => {
+            if (index !== otherIndex) {
+                const distance = node.position.distanceTo(otherNode.position);
+                if (distance < 5) { // Create a connection if nodes are close enough
+                    connections.push(new Connection(node, otherNode));
+                }
+            }
+        });
+    });
+}
+
+// Create nodes based on sacred geometry
+createSacredNodes();
 
 // Add an animation loop to update and render the scene
 function animate() {
@@ -66,6 +134,9 @@ function animate() {
     // Update all nodes
     nodes.forEach(node => node.update());
 
+    // Update all connections
+    connections.forEach(connection => connection.update());
+
     // Render the scene from the camera's perspective
     renderer.render(scene, camera);
 }
@@ -73,6 +144,4 @@ function animate() {
 animate();
 
 // Set the camera's initial position so we can see the nodes
-camera.position.z = 10;
-
-// Optional: Add controls to allow camera movement (like orbit controls) for better exploration
+camera.position.z = 15;
