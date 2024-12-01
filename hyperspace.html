@@ -29,7 +29,7 @@
 </head>
 <body>
   <div id="info">
-    <p>Drag your finger to create shapes. Watch them evolve and dissipate!</p>
+    <p>Drag your finger to create evolving nodes. Watch as they adapt and enhance the game!</p>
   </div>
   <canvas id="geometryCanvas"></canvas>
 
@@ -75,48 +75,53 @@
 
     let isDragging = false;
 
+    // Node Class with Evolutionary Attributes
+    class Node {
+      constructor(x, y, z) {
+        const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+        this.mesh = new THREE.Mesh(geometry, nodeMaterial);
+        this.mesh.position.set(x, y, z);
+        this.age = 0;
+        this.energy = Math.random() * 50 + 50; // Starting energy
+        this.intelligence = Math.random() * 50 + 50; // Determines evolution ability
+        this.connectivity = Math.random() * 10; // Number of connections
+        this.survivability = Math.random() * 100; // Chance to persist
+        scene.add(this.mesh);
+        nodes.push(this);
+      }
+
+      evolve() {
+        if (this.energy > 100) {
+          this.intelligence += Math.random() * 5; // Increase intelligence
+          this.connectivity += Math.random(); // Become more connected
+          this.energy = 50; // Reset energy after evolving
+        }
+      }
+
+      dissipate() {
+        this.age++;
+        this.energy -= 0.5; // Energy depletes over time
+
+        // Remove node if its survivability is low and energy is gone
+        if (this.age > 200 && this.energy <= 0 && Math.random() * 100 > this.survivability) {
+          scene.remove(this.mesh);
+          nodes.splice(nodes.indexOf(this), 1);
+        }
+      }
+    }
+
     // Function to Create a Node
     function createNode(x, y, z) {
-      const geometry = new THREE.SphereGeometry(0.2, 16, 16);
-      const node = new THREE.Mesh(geometry, nodeMaterial);
-      node.position.set(x, y, z);
-      node.age = 0; // Node "age" for dissipation logic
-      node.survivability = Math.random() * 100; // Random survivability rating
-      scene.add(node);
-      nodes.push(node);
-      return node;
+      return new Node(x, y, z);
     }
 
     // Function to Connect Nodes
     function connectNodes(node1, node2) {
-      const points = [node1.position, node2.position];
+      const points = [node1.mesh.position, node2.mesh.position];
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x007bff }));
       scene.add(line);
       connections.push({ line, node1, node2 });
-    }
-
-    // Dissipation Logic
-    function updateNodes() {
-      for (let i = nodes.length - 1; i >= 0; i--) {
-        const node = nodes[i];
-        node.age += 1;
-
-        // Dissipate nodes over time if survivability is low
-        if (node.age > 200 && Math.random() * 100 > node.survivability) {
-          scene.remove(node);
-          nodes.splice(i, 1);
-        }
-      }
-
-      // Update connections
-      for (let i = connections.length - 1; i >= 0; i--) {
-        const { line, node1, node2 } = connections[i];
-        if (!nodes.includes(node1) || !nodes.includes(node2)) {
-          scene.remove(line);
-          connections.splice(i, 1);
-        }
-      }
     }
 
     // Generate Nodes and Shapes While Dragging
@@ -133,7 +138,7 @@
 
       // Connect to random nearby nodes
       nodes.forEach(node => {
-        if (node !== newNode && node.position.distanceTo(newNode.position) < 5) {
+        if (node !== newNode && node.mesh.position.distanceTo(newNode.mesh.position) < 5) {
           connectNodes(newNode, node);
         }
       });
@@ -145,7 +150,10 @@
 
     // Animation Loop
     function animate() {
-      updateNodes();
+      nodes.forEach(node => {
+        node.evolve();
+        node.dissipate();
+      });
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
