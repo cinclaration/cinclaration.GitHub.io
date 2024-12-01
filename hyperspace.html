@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperspace Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle, #1d1f24, #000);
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="geometryCanvas"></canvas>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Firebase Initialization
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.getDatabase(app);
+
+        // Three.js Initialization
+        const canvas = document.getElementById('geometryCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 10;
+
+        const clock = new THREE.Clock();
+
+        // Materials
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+        const pulsatingMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0.0 }
+            },
+            vertexShader: `
+                uniform float time;
+                varying vec3 vColor;
+                void main() {
+                    vColor = position;
+                    vec3 pulsate = position * (sin(time + length(position)) * 0.1 + 1.0);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pulsate, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                void main() {
+                    gl_FragColor = vec4(abs(vColor), 1.0);
+                }
+            `
+        });
+
+        // Node and Line Management
+        const nodes = [];
+        const lines = [];
+
+        function createNode(x, y, z) {
+            const geometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const node = new THREE.Mesh(geometry, pulsatingMaterial.clone());
+            node.position.set(x, y, z);
+            scene.add(node);
+            nodes.push(node);
+            return node;
+        }
+
+        function connectNodes(node1, node2) {
+            const points = [node1.position, node2.position];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, lineMaterial);
+            scene.add(line);
+            lines.push(line);
+        }
+
+        function generateTesseract() {
+            const size = 2;
+            const offset = 1.5;
+            for (let i = -size; i <= size; i += offset) {
+                for (let j = -size; j <= size; j += offset) {
+                    for (let k = -size; k <= size; k += offset) {
+                        createNode(i, j, k);
+                    }
+                }
+            }
+            // Connect nodes to form tesseract-like structures
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    if (nodes[i].position.distanceTo(nodes[j].position) < offset * 1.5) {
+                        connectNodes(nodes[i], nodes[j]);
+                    }
+                }
+            }
+        }
+
+        // Complexify Nodes
+        function complexify() {
+            nodes.forEach(node => {
+                const newNode = createNode(
+                    node.position.x + (Math.random() - 0.5),
+                    node.position.y + (Math.random() - 0.5),
+                    node.position.z + (Math.random() - 0.5)
+                );
+                connectNodes(node, newNode);
+            });
+        }
+
+        // Animate
+        function animate() {
+            const delta = clock.getDelta();
+            pulsatingMaterial.uniforms.time.value += delta;
+
+            lines.forEach(line => {
+                const vertices = line.geometry.attributes.position.array;
+                for (let i = 0; i < vertices.length; i += 3) {
+                    vertices[i] += (Math.random() - 0.5) * 0.01;
+                    vertices[i + 1] += (Math.random() - 0.5) * 0.01;
+                    vertices[i + 2] += (Math.random() - 0.5) * 0.01;
+                }
+                line.geometry.attributes.position.needsUpdate = true;
+            });
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        // Initial Setup
+        generateTesseract();
+
+        setInterval(() => {
+            complexify();
+        }, 5000); // Add complexity every 5 seconds
+
+        animate();
+
+        // Firebase Sync Example (Placeholder)
+        firebase.database().ref('/geometry').on('value', snapshot => {
+            const data = snapshot.val();
+            console.log('Syncing with Firebase:', data);
+        });
+    </script>
+</body>
+</html>
