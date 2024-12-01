@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Website</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Explore the Cosmos</title>
   <style>
     /* General Styles */
-    body, html {
+    * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
-      background-color: #121212;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to bottom, #0f0f0f, #1a1a2e);
       color: #fff;
+      overflow-x: hidden;
     }
 
     a {
@@ -21,88 +24,84 @@
       color: inherit;
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
     /* Header */
     header {
-      position: sticky;
+      position: fixed;
       top: 0;
-      background: #000;
+      left: 0;
+      width: 100%;
       padding: 1rem 2rem;
-      z-index: 10;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
     }
 
-    header .logo {
+    .logo {
       font-size: 1.5rem;
       font-weight: bold;
     }
 
-    header nav {
+    nav ul {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      gap: 2rem;
+      list-style: none;
     }
 
-    header .nav-links {
+    nav ul li {
+      padding: 0.5rem 1rem;
+      border: 2px solid transparent;
+      border-radius: 5px;
+      transition: border 0.3s ease, background 0.3s ease;
+    }
+
+    nav ul li:hover {
+      border: 2px solid #007bff;
+      background: rgba(0, 123, 255, 0.2);
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .hero p {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
       display: flex;
       gap: 1rem;
       flex-wrap: wrap;
     }
 
-    header .nav-links a {
-      padding: 0.5rem 1rem;
-      background: #333;
-      border-radius: 5px;
-      transition: background 0.3s ease, transform 0.2s;
-      font-size: 1rem;
-    }
-
-    header .nav-links a:hover {
-      background: #007bff;
-      transform: scale(1.05);
-    }
-
-    /* Hero Section */
-    .hero {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      height: 100vh;
-      background: linear-gradient(to bottom, #000, #007bff);
-      animation: fadeIn 1s ease-out;
-    }
-
-    .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-    }
-
-    .hero p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
-    }
-
-    .hero .cta-button {
+    .cta-buttons a {
       padding: 1rem 2rem;
-      margin: 0.5rem;
       font-size: 1rem;
       color: white;
       background: #007bff;
-      border: none;
       border-radius: 5px;
-      cursor: pointer;
       transition: background 0.3s ease, transform 0.2s;
     }
 
-    .hero .cta-button:hover {
+    .cta-buttons a:hover {
       background: #0056b3;
       transform: scale(1.05);
     }
@@ -110,7 +109,6 @@
     /* Highlights Section */
     .highlights {
       padding: 3rem 2rem;
-      background: #121212;
       text-align: center;
     }
 
@@ -119,48 +117,28 @@
       margin-bottom: 2rem;
     }
 
-    .highlights-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-    }
-
     .highlight-item {
-      background: #333;
       padding: 2rem;
+      margin: 1rem auto;
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
       transition: transform 0.3s ease, background 0.3s ease;
     }
 
     .highlight-item:hover {
       transform: translateY(-5px);
-      background: #007bff;
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .highlight-item h3 {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
       margin-bottom: 1rem;
     }
 
     .highlight-item p {
-      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
       color: #ccc;
-    }
-
-    .cta-link {
-      padding: 0.5rem 1rem;
-      background: #121212;
-      color: #007bff;
-      border: 1px solid #007bff;
-      border-radius: 5px;
-      font-weight: bold;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-
-    .cta-link:hover {
-      background: #007bff;
-      color: white;
     }
 
     /* Footer */
@@ -171,88 +149,73 @@
       padding: 1.5rem 1rem;
     }
 
-    footer .social-links {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1rem;
+    footer p {
+      font-size: 0.9rem;
     }
 
-    footer .social-links a {
+    footer a {
       color: #007bff;
+      margin: 0 0.5rem;
+      font-weight: bold;
       transition: color 0.3s ease;
     }
 
-    footer .social-links a:hover {
+    footer a:hover {
       color: #0056b3;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
     }
   </style>
 </head>
 <body>
   <!-- Header -->
   <header>
+    <div class="logo">Cosmic Odyssey</div>
     <nav>
-      <a href="index.html" class="logo">My Website</a>
-      <ul class="nav-links">
-        <li><a href="Game.html">Play the Game</a></li>
-        <li><a href="flowtoy.html">Flow Toy</a></li>
-        <li><a href="store.html">Store</a></li>
+      <ul>
+        <li><a href="Game.html">Games</a></li>
+        <li><a href="simulator.html">Hyperspace Simulator</a></li>
         <li><a href="community.html">Community</a></li>
-        <li><a href="about.html">About Us</a></li>
       </ul>
     </nav>
   </header>
 
   <!-- Hero Section -->
   <section class="hero">
-    <h1>Welcome to My Website</h1>
-    <p>Explore, play, shop, and connect. The universe is in your hands!</p>
-    <a href="Game.html" class="cta-button">Play the Game</a>
-    <a href="flowToy.html" class="cta-button">Explore Flow Toy</a>
+    <h1>Welcome to Cosmic Odyssey</h1>
+    <p>Embark on a journey through the cosmos. Play interactive games or explore the wonders of the hyperspace simulator.</p>
+    <div class="cta-buttons">
+      <a href="Game.html">Play the Game</a>
+      <a href="simulator.html">Hyperspace Simulator</a>
+    </div>
   </section>
 
   <!-- Highlights Section -->
   <section class="highlights">
-    <h2>Explore Our Features</h2>
-    <div class="highlights-grid">
-      <div class="highlight-item">
-        <h3>Play the Game</h3>
-        <p>Immerse yourself in an interactive gaming experience. Challenge yourself!</p>
-        <a href="Game.html" class="cta-link">Play Now</a>
-      </div>
+    <h2>Features</h2>
 
-      <div class="highlight-item">
-        <h3>Flow Toy</h3>
-        <p>Interact with a sound-reactive, gyroscopic flow tool and discover its beauty.</p>
-        <a href="flowtoy.html" class="cta-link">Explore</a>
-      </div>
+    <div class="highlight-item">
+      <h3>Games</h3>
+      <p>Challenge yourself with immersive gaming experiences designed to thrill and engage.</p>
+    </div>
 
-      <div class="highlight-item">
-        <h3>Shop Our Store</h3>
-        <p>Discover unique products and exclusive items. Shop now for amazing deals!</p>
-        <a href="store.html" class="cta-link">Visit Store</a>
-      </div>
+    <div class="highlight-item">
+      <h3>Hyperspace Simulator</h3>
+      <p>Dive into a living, breathing, self-evolving geometric universe inspired by the mysteries of hyperspace.</p>
+    </div>
+
+    <div class="highlight-item">
+      <h3>Community</h3>
+      <p>Connect with like-minded explorers. Share ideas, creations, and experiences.</p>
     </div>
   </section>
 
   <!-- Footer -->
   <footer>
-    <p>&copy; 2024 My Website. All rights reserved.</p>
-    <div class="social-links">
-      <a href="https://twitter.com" target="_blank">Twitter</a>
-      <a href="https://facebook.com" target="_blank">Facebook</a>
+    <p>&copy; 2024 Cosmic Odyssey. All rights reserved.</p>
+    <p>
+      <a href="https://twitter.com" target="_blank">Twitter</a> |
+      <a href="https://facebook.com" target="_blank">Facebook</a> |
       <a href="https://instagram.com" target="_blank">Instagram</a>
-    </div>
+    </p>
   </footer>
 </body>
 </html>
