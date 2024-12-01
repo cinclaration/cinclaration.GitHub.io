@@ -43,14 +43,14 @@
   <script>
     // Firebase Initialization
     const firebaseConfig = {
-      apiKey: "AIzaSyDO8OI_j_lqNmcjK5sw5t6ebR_-q2P4pu0",
-      authDomain: "gearelic-20939.firebaseapp.com",
-      databaseURL: "https://gearelic-20939-default-rtdb.firebaseio.com",
-      projectId: "gearelic-20939",
-      storageBucket: "gearelic-20939.appspot.com",
-      messagingSenderId: "491990312374",
-      appId: "1:491990312374:web:ad7f7072c84cf52267cd17",
-      measurementId: "G-3SBX3NJ1D1"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      databaseURL: "YOUR_DATABASE_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID",
+      measurementId: "YOUR_MEASUREMENT_ID"
     };
 
     const app = firebase.initializeApp(firebaseConfig);
@@ -147,7 +147,8 @@
     canvas.addEventListener('pointermove', onPointerMove);
 
     function animate() {
-      nodes.forEach(node => node.evolve();
+      nodes.forEach(node => {
+        node.evolve();
         node.dissipate();
       });
 
