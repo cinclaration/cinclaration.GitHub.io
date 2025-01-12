@@ -1,18 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Interactive Landing Page</title>
   <style>
-    /* General Reset */
-    body, html {
+    /* -------------------------------------------------------
+       GENERAL RESET & BASIC STYLES
+    ------------------------------------------------------- */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
+    }
+
+    body, html {
       font-family: Arial, sans-serif;
       color: #fff;
       background: linear-gradient(to bottom, #121212, #000);
+      min-height: 100vh;
     }
 
     a {
@@ -26,7 +32,9 @@
       margin: 0;
     }
 
-    /* Header */
+    /* -------------------------------------------------------
+       HEADER
+    ------------------------------------------------------- */
     header {
       position: sticky;
       top: 0;
@@ -64,7 +72,9 @@
       transform: scale(1.1);
     }
 
-    /* Hero Section */
+    /* -------------------------------------------------------
+       HERO SECTION
+    ------------------------------------------------------- */
     .hero {
       display: flex;
       flex-direction: column;
@@ -73,7 +83,8 @@
       text-align: center;
       height: 100vh;
       background: url('https://source.unsplash.com/1600x900/?space') no-repeat center center/cover;
-      color: white;
+      color: #fff;
+      padding: 0 1rem; /* better spacing on mobile */
     }
 
     .hero h1 {
@@ -84,13 +95,14 @@
     .hero p {
       font-size: 1.2rem;
       margin-bottom: 2rem;
+      max-width: 600px;
     }
 
     .hero .cta-button {
       padding: 1rem 2rem;
       margin: 0.5rem;
       font-size: 1rem;
-      color: white;
+      color: #fff;
       background: #007bff;
       border: none;
       border-radius: 5px;
@@ -103,7 +115,22 @@
       transform: scale(1.1);
     }
 
-    /* Highlights Section */
+    /* Responsive font sizes for hero */
+    @media (max-width: 600px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+      .hero p {
+        font-size: 1rem;
+      }
+      .hero .cta-button {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* -------------------------------------------------------
+       HIGHLIGHTS SECTION
+    ------------------------------------------------------- */
     .highlights {
       padding: 3rem 2rem;
       text-align: center;
@@ -117,8 +144,10 @@
 
     .highlights-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
     .highlight-item {
@@ -155,14 +184,20 @@
 
     .cta-link:hover {
       background: #007bff;
-      color: white;
+      color: #fff;
     }
 
-    /* Footer */
+    /* -------------------------------------------------------
+       FOOTER
+    ------------------------------------------------------- */
     footer {
       background: rgba(0, 0, 0, 0.9);
       text-align: center;
       padding: 1.5rem 1rem;
+    }
+
+    footer p {
+      margin-bottom: 0.5rem;
     }
 
     footer .social-links {
@@ -183,28 +218,36 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
+  <!-- =========================
+       HEADER
+  ========================== -->
   <header>
     <nav>
       <a href="#" class="logo">Interactive Universe</a>
       <ul class="nav-links">
+        <!-- Updated to match your actual files -->
         <li><a href="Game.html">Game</a></li>
-        <li><a href="flowToy.html">Flow Toy</a></li>
+        <li><a href="flowtoy.html">Flow Toy</a></li>
         <li><a href="hyperspace.html">Hyperspace</a></li>
       </ul>
     </nav>
   </header>
 
-  <!-- Hero Section -->
+  <!-- =========================
+       HERO SECTION
+  ========================== -->
   <section class="hero">
     <h1>Welcome to the Interactive Universe</h1>
-    <p>Embark on an adventure through games, tools, and simulations.</p>
+    <p>Embark on an adventure through games, tools, and simulations—all at your fingertips.</p>
+    <!-- Updated to match your actual files -->
     <a href="Game.html" class="cta-button">Play the Game</a>
-    <a href="flowToy.html" class="cta-button">Explore Flow Toy</a>
+    <a href="flowtoy.html" class="cta-button">Explore Flow Toy</a>
     <a href="hyperspace.html" class="cta-button">Hyperspace Simulator</a>
   </section>
 
-  <!-- Highlights Section -->
+  <!-- =========================
+       HIGHLIGHTS SECTION
+  ========================== -->
   <section class="highlights">
     <h2>Discover More</h2>
     <div class="highlights-grid">
@@ -216,7 +259,7 @@
       <div class="highlight-item">
         <h3>Flow Toy</h3>
         <p>Relax and explore mesmerizing sound-reactive and gyroscopic patterns.</p>
-        <a href="flowToy.html" class="cta-link">Learn More</a>
+        <a href="flowtoy.html" class="cta-link">Learn More</a>
       </div>
       <div class="highlight-item">
         <h3>Hyperspace Simulator</h3>
@@ -226,7 +269,9 @@
     </div>
   </section>
 
-  <!-- Footer -->
+  <!-- =========================
+       FOOTER
+  ========================== -->
   <footer>
     <p>&copy; 2024 Interactive Universe. All rights reserved.</p>
     <div class="social-links">
